@@ -1,4 +1,4 @@
-# ValDeli API Backend
+# Gesdon API Rest Backend
 
 Backend API pour l'application de livraison et transport ValDeli. Cette API gère les aspects de gestion des utilisateurs, commandes, paiements et points de relais.
 
@@ -25,8 +25,8 @@ Backend API pour l'application de livraison et transport ValDeli. Cette API gèr
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/your-organization/valdeli-server.git
-cd valdeli-server
+git https://github.com/Appatam-SARL/gestdon-server.git
+cd gestdon-server
 
 # Installer les dépendances
 pnpm install
@@ -42,7 +42,7 @@ cp .env.example .env
 
 Variables d'environnement principales :
 
-- `PORT` : Port du serveur (défaut: 3000)
+- `PORT` : Port du serveur (défaut: 5000)
 - `MONGODB_URI` : URI de connexion à MongoDB
 - `JWT_SECRET` : Clé secrète pour les tokens JWT
 - `CLIENT_URL` : URL du client pour CORS
@@ -67,7 +67,7 @@ pnpm start
 La documentation de l'API est disponible via Swagger UI à l'adresse :
 
 ```
-http://localhost:3000/api-docs
+http://localhost:5000/api-docs
 ```
 
 Cette documentation interactive vous permet de :
@@ -315,8 +315,8 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=your_password
 REDIS_DB=0
-REDIS_PREFIX=valdeli:
-QUEUE_PREFIX=valdeli:queue:
+REDIS_PREFIX=gesdon:
+QUEUE_PREFIX=gesdon:queue:
 ```
 
 ### Utilisation dans le code
@@ -326,7 +326,7 @@ QUEUE_PREFIX=valdeli:queue:
 await QueueService.addJob('email', 'send_email', {
   to: 'user@example.com',
   subject: 'Bienvenue',
-  html: '<h1>Bienvenue sur ValDeli!</h1>',
+  html: '<h1>Bienvenue sur Contrib!</h1>',
 });
 
 // Envoi d'emails en masse
@@ -353,4 +353,4 @@ Les files d'attente peuvent être surveillées via Bull Board ou Redis Commander
 
 ---
 
-© 2025 ValDeli. Tous droits réservés.
+© 2025 appatam. Tous droits réservés.
