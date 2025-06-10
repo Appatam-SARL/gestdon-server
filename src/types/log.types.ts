@@ -1,0 +1,35 @@
+export const LOG_ENTITY_TYPES = {
+  ADMIN: 'ADMIN',
+  USER: 'USER',
+  PRODUCT: 'PRODUCT',
+  ORDER: 'ORDER',
+} as const;
+
+export const LOG_ACTIONS = {
+  // Actions d'authentification
+  LOGIN: 'LOGIN',
+  LOGOUT: 'LOGOUT',
+  PASSWORD_CHANGE: 'PASSWORD_CHANGE',
+  PASSWORD_RESET: 'PASSWORD_RESET',
+  ACCOUNT_CONFIRMED: 'ACCOUNT_CONFIRMED',
+
+  // Actions MFA
+  MFA_SETUP: 'MFA_SETUP',
+  MFA_ACTIVATE: 'MFA_ACTIVATE',
+  MFA_DEACTIVATE: 'MFA_DEACTIVATE',
+  MFA_VERIFY: 'MFA_VERIFY',
+
+  // Actions CRUD
+  CREATE: 'CREATE',
+  READ: 'READ',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+
+  // Actions spécifiques
+  ORDER_STATUS_CHANGE: 'ORDER_STATUS_CHANGE',
+  PRODUCT_STOCK_UPDATE: 'PRODUCT_STOCK_UPDATE',
+} as const;
+
+export type LogEntityType =
+  (typeof LOG_ENTITY_TYPES)[keyof typeof LOG_ENTITY_TYPES];
+export type LogAction = (typeof LOG_ACTIONS)[keyof typeof LOG_ACTIONS];

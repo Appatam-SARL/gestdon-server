@@ -1,0 +1,159 @@
+@baseUrl = http://localhost:3000/api
+@userToken = {{userToken}}
+@adminToken = {{adminToken}}
+@orderId = {{orderId}}
+@productId = {{productId}}
+
+### Variables globales
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+###
+@userToken = {{login.response.body.token}}
+
+### Gestion des commandes
+
+### Créer une nouvelle commande
+# @name createOrder
+POST {{baseUrl}}/orders
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "product": "{{productId}}",
+      "quantity": 2,
+      "specialInstructions": "Sans glaçage"
+    },
+    {
+      "product": "product_id_2",
+      "quantity": 1
+    }
+  ],
+  "deliveryMethod": "pickup",
+  "pickupTime": "2023-08-15T14:30:00Z",
+  "paymentMethod": "card",
+  "address": {
+    "street": "123 Rue de la Paix",
+    "city": "Paris",
+    "postalCode": "75001",
+    "country": "France"
+  },
+  "notes": "Sonnez à l'interphone"
+}
+
+###
+@orderId = {{createOrder.response.body._id}}
+
+### Obtenir toutes les commandes de l'utilisateur
+GET {{baseUrl}}/orders
+Authorization: Bearer {{userToken}}
+
+### Obtenir une commande par ID
+GET {{baseUrl}}/orders/{{orderId}}
+Authorization: Bearer {{userToken}}
+
+### Annuler une commande
+PATCH {{baseUrl}}/orders/{{orderId}}/cancel
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "reason": "Changement de plans"
+}
+
+### Mettre à jour le statut d'une commande (admin uniquement)
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "preparing",
+  "notes": "Commande en préparation"
+}
+
+### Administration des commandes (accès administrateur uniquement)
+
+### Obtenir toutes les commandes
+GET {{baseUrl}}/admin/orders
+Authorization: Bearer {{adminToken}}
+
+### Filtrer les commandes par statut
+GET {{baseUrl}}/admin/orders?status=pending
+Authorization: Bearer {{adminToken}}
+
+### Filtrer les commandes par date
+GET {{baseUrl}}/admin/orders?startDate=2023-08-01&endDate=2023-08-15
+Authorization: Bearer {{adminToken}}
+
+### Obtenir les commandes d'un utilisateur spécifique
+GET {{baseUrl}}/admin/orders?user={{userId}}
+Authorization: Bearer {{adminToken}}
+
+### Obtenir les statistiques des commandes
+GET {{baseUrl}}/admin/orders/stats
+Authorization: Bearer {{adminToken}}
+
+### Obtenir les commandes à préparer pour aujourd'hui
+GET {{baseUrl}}/admin/orders/today
+Authorization: Bearer {{adminToken}}
+
+### Gérer le panier
+
+### Ajouter un article au panier
+POST {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "product": "{{productId}}",
+  "quantity": 1,
+  "specialInstructions": "Sans glaçage"
+}
+
+### Obtenir le contenu du panier
+GET {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+
+### Mettre à jour un article du panier
+PUT {{baseUrl}}/cart/item/{{productId}}
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "quantity": 3,
+  "specialInstructions": "Avec glaçage supplémentaire"
+}
+
+### Supprimer un article du panier
+DELETE {{baseUrl}}/cart/item/{{productId}}
+Authorization: Bearer {{userToken}}
+
+### Vider le panier
+DELETE {{baseUrl}}/cart
+Authorization: Bearer {{userToken}}
+
+### Passer de la commande au panier
+POST {{baseUrl}}/cart/checkout
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "deliveryMethod": "pickup",
+  "pickupTime": "2023-08-15T14:30:00Z",
+  "paymentMethod": "card",
+  "address": {
+    "street": "123 Rue de la Paix",
+    "city": "Paris",
+    "postalCode": "75001",
+    "country": "France"
+  },
+  "notes": "Sonnez à l'interphone"
+} 

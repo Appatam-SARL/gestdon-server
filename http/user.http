@@ -1,0 +1,162 @@
+@baseUrl = http://localhost:3000/api
+@userToken = {{userToken}}
+@adminToken = {{adminToken}}
+@userId = {{userId}}
+
+### Variables globales
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+###
+@userToken = {{login.response.body.token}}
+
+### Authentification
+
+# Inscription d'un utilisateur
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "nouveau@example.com",
+  "password": "Password123!",
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "phone": "+33612345678"
+}
+
+### Connexion d'un utilisateur
+# @name userLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+### Récupération de mot de passe
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+### Réinitialisation de mot de passe
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "token_de_reinitialisation",
+  "password": "NouveauPassword123!"
+}
+
+### Vérification de compte
+GET {{baseUrl}}/auth/verify/verification_token
+
+### Gestion d'utilisateur
+
+### Obtenir le profil utilisateur
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+
+### Mettre à jour le profil utilisateur
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "phone": "+33612345678",
+  "address": {
+    "street": "123 Rue de la Paix",
+    "city": "Paris",
+    "postalCode": "75001",
+    "country": "France"
+  }
+}
+
+### Mettre à jour le mot de passe
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NouveauPassword123!"
+}
+
+### Désactiver le compte
+DELETE {{baseUrl}}/users/deactivate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "password": "Password123!"
+}
+
+### Annuler la suppression du compte
+POST {{baseUrl}}/users/cancel-deletion
+Authorization: Bearer {{userToken}}
+
+### Authentification à deux facteurs (MFA)
+
+### Activer la MFA
+POST {{baseUrl}}/auth/mfa/enable
+Authorization: Bearer {{userToken}}
+
+### Vérifier et activer la MFA
+POST {{baseUrl}}/auth/mfa/verify
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+### Désactiver la MFA
+POST {{baseUrl}}/auth/mfa/disable
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+### Administration (accès administrateur uniquement)
+
+### Obtenir tous les utilisateurs
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+
+### Rechercher des utilisateurs
+GET {{baseUrl}}/admin/users/search?query=jean
+Authorization: Bearer {{adminToken}}
+
+### Obtenir un utilisateur par ID
+GET {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+### Mettre à jour un utilisateur
+PUT {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "email": "jean.dupont@example.com",
+  "role": "USER",
+  "isActive": true
+}
+
+### Supprimer un utilisateur
+DELETE {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{adminToken}} 

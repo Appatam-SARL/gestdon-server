@@ -1,0 +1,128 @@
+### Variables communes
+@baseUrl = {{baseUrl}}
+@userToken = {{userToken}}
+@adminToken = {{adminToken}}
+@userId = {{userId}}
+
+### Inscription utilisateur
+# @name registerUser
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Durand",
+  "email": "jean.durand@example.com",
+  "phone": "+33612345678",
+  "password": "MotDePasse123!",
+  "address": {
+    "street": "123 Rue de Paris",
+    "city": "Lyon",
+    "postalCode": "69000",
+    "country": "France"
+  }
+}
+
+### Connexion utilisateur
+# @name loginUser
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "jean.durand@example.com",
+  "password": "MotDePasse123!"
+}
+
+### Vérification de token
+GET {{baseUrl}}/users/verify-token
+Authorization: Bearer {{userToken}}
+
+### Vérification d'email
+GET {{baseUrl}}/users/verify-email/{{$dotenv verificationToken}}
+
+### Obtenir son profil (utilisateur connecté)
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+
+### Mettre à jour son profil
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "firstName": "Jean-Pierre",
+  "lastName": "Durand",
+  "phone": "+33612345678",
+  "address": {
+    "street": "456 Avenue de Lyon",
+    "city": "Paris",
+    "postalCode": "75001",
+    "country": "France"
+  }
+}
+
+### Mettre à jour son mot de passe
+PUT {{baseUrl}}/users/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "MotDePasse123!",
+  "newPassword": "NouveauMotDePasse456!"
+}
+
+### Activer l'authentification à deux facteurs (MFA)
+POST {{baseUrl}}/users/mfa/enable
+Authorization: Bearer {{userToken}}
+
+### Vérifier et activer définitivement le MFA
+POST {{baseUrl}}/users/mfa/verify
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+### Désactiver l'authentification à deux facteurs (MFA)
+POST {{baseUrl}}/users/mfa/disable
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "token": "123456"
+}
+
+### Mot de passe oublié (demande de réinitialisation)
+POST {{baseUrl}}/users/forgot-password
+Content-Type: application/json
+
+{
+  "email": "jean.durand@example.com"
+}
+
+### Réinitialisation de mot de passe
+POST {{baseUrl}}/users/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{$dotenv resetToken}}",
+  "password": "NouveauMotDePasse789!"
+}
+
+### Déconnexion
+POST {{baseUrl}}/users/logout
+Authorization: Bearer {{userToken}}
+
+### Demande de suppression de compte
+DELETE {{baseUrl}}/users/account
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "password": "MotDePasse123!"
+}
+
+### Annuler la demande de suppression de compte
+POST {{baseUrl}}/users/account/cancel-deletion
+Authorization: Bearer {{userToken}} 

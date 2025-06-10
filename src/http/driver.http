@@ -1,0 +1,197 @@
+### ===== Driver API =====
+@baseUrl = http://localhost:5500/v1/api
+@driverEmail = mrtraore7emedunom@gmail.com
+@driverPassword = Driver123!
+@driverToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### ===== Auth Driver =====
+
+### Inscription d'un chauffeur
+POST {{baseUrl}}/drivers/register
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "email": "{{driverEmail}}",
+  "phone": "+2250788249195",
+  "password": "{{driverPassword}}",
+  "partnerId": "67daa3ac2387bb386c362d66",
+  "address": {
+    "street": "123 Rue de Paris",
+    "city": "Lyon",
+    "postalCode": "69000",
+    "country": "France"
+  },
+  "emergencyContact": {
+    "name": "Marie Dupont",
+    "relationship": "Épouse",
+    "phone": "+2250788249195"
+  },
+  "driverLicense": "12345678ABCDE"
+}
+
+### Connexion
+POST {{baseUrl}}/drivers/login
+Content-Type: application/json
+
+{
+  "email": "{{driverEmail}}",
+  "password": "{{driverPassword}}"
+}
+
+### Mot de passe oublié
+POST {{baseUrl}}/drivers/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{driverEmail}}"
+}
+
+### Réinitialiser le mot de passe
+POST {{baseUrl}}/drivers/reset-password/your_reset_token_here
+Content-Type: application/json
+
+{
+  "password": "NewPassword123!"
+}
+
+### ===== Profil Driver =====
+
+### Obtenir mon profil
+GET {{baseUrl}}/drivers/profile
+Authorization: Bearer {{driverToken}}
+
+### Mettre à jour mon profil
+PUT {{baseUrl}}/drivers/profile
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "personalInfo": {
+    "phone": "+33612345679",
+    "address": {
+      "street": "456 Avenue des Fleurs",
+      "city": "Lyon",
+      "postalCode": "69000",
+      "country": "France"
+    },
+    "emergencyContact": {
+      "name": "Marie Dupont",
+      "relationship": "Épouse",
+      "phone": "+33687654322"
+    }
+  },
+  "isAvailable": true
+}
+
+### Changer mon mot de passe
+PUT {{baseUrl}}/drivers/password
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "{{driverPassword}}",
+  "newPassword": "NewPassword123!"
+}
+
+### Mettre à jour mon token push
+PUT {{baseUrl}}/drivers/push-token
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "token": "fcm-token-example",
+  "platform": "android"
+}
+
+### ===== Géolocalisation =====
+
+### Mettre à jour ma position
+POST {{baseUrl}}/drivers/location
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{
+  "coordinates": [2.3522, 48.8566],
+  "heading": 90,
+  "speed": 35
+}
+
+### Rechercher les chauffeurs à proximité
+GET {{baseUrl}}/drivers/nearby?lat=48.8566&lng=2.3522&isAvailable=true
+Authorization: Bearer {{driverToken}}
+
+### ===== Admin Actions sur les Chauffeurs =====
+
+### Liste de tous les chauffeurs (Admin only)
+GET {{baseUrl}}/drivers
+Authorization: Bearer {{adminToken}}
+
+### Liste avec filtres (Admin only)
+GET {{baseUrl}}/drivers?status=APPROVED&isAvailable=true&page=1&limit=10
+Authorization: Bearer {{adminToken}}
+
+### Obtenir un chauffeur par ID (Admin only)
+GET {{baseUrl}}/drivers/driver_id_here
+Authorization: Bearer {{adminToken}}
+
+### Mettre à jour un chauffeur (Admin only)
+PUT {{baseUrl}}/drivers/driver_id_here
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "personalInfo": {
+    "firstName": "Jean",
+    "lastName": "Martin",
+    "phone": "+33612345680"
+  },
+  "isAvailable": true,
+  "isActive": true,
+  "status": "APPROVED"
+}
+
+### Mettre à jour le statut d'un chauffeur (Admin only)
+PUT {{baseUrl}}/drivers/driver_id_here/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### Supprimer un chauffeur (Admin only)
+DELETE {{baseUrl}}/drivers/driver_id_here
+Authorization: Bearer {{adminToken}}
+
+### ===== Socket.IO (Commentaires) =====
+# Pour Socket.IO, vous ne pouvez pas tester directement avec le fichier .http
+# Car il fonctionne avec un protocole WebSocket et pas HTTP
+# Voici un exemple de code JavaScript pour tester avec un client Socket.IO:
+#
+# ```javascript
+# const socket = io('http://localhost:5500');
+# 
+# // Authentification
+# socket.emit('driver-auth', { 
+#   driverId: 'votre_driver_id', 
+#   token: 'votre_token_jwt' 
+# });
+# 
+# // Mise à jour de position
+# socket.emit('driver-location', {
+#   driverId: 'votre_driver_id',
+#   coordinates: [2.3522, 48.8566],
+#   heading: 90,
+#   speed: 35,
+#   timestamp: new Date(),
+#   isAvailable: true
+# });
+# 
+# // Recevoir les mises à jour de position des autres chauffeurs
+# socket.on('driver-location-update', (data) => {
+#   console.log('Position mise à jour:', data);
+# });
+# ``` 

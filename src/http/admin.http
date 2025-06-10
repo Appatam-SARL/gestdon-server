@@ -1,0 +1,112 @@
+### ===== Auth Admin =====
+
+### Login Super Admin
+@baseUrl = http://localhost:4000/api
+@superAdminEmail = traoreoscar009@gmail.com
+@superAdminPassword = SuperAdmin123!
+@adminEmail = admin@admin.com
+@adminPassword = Admin123!
+@adminToken = hjklkjhgghjkl
+
+
+POST {{baseUrl}}/admins/login
+Content-Type: application/json
+
+{
+    "email": "{{superAdminEmail}}",
+    "password": "{{superAdminPassword}}"
+}
+
+### Login Admin
+POST {{baseUrl}}/admins/login
+Content-Type: application/json
+
+{
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+}
+
+### Vérifier MFA
+POST {{baseUrl}}/admins/verify-mfa
+Content-Type: application/json
+
+{
+    "adminId": "admin_id_ici",
+    "mfaToken": "123456"
+}
+
+### ===== Gestion des Admins =====
+
+### Liste des admins (SUPER_ADMIN only)
+GET {{baseUrl}}/admins?page=1&limit=10&search=&sortBy=createdAt&sortOrder=desc
+Authorization: Bearer {{adminToken}}
+
+### Créer un nouvel admin (SUPER_ADMIN only)
+POST {{baseUrl}}/admins
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "email": "new.admin@test.com",
+    "firstName": "New",
+    "lastName": "Admin",
+    "role": "ADMIN"
+}
+
+### Récupérer un admin par ID
+GET {{baseUrl}}/admins/admin_id_ici
+Authorization: Bearer {{adminToken}}
+
+### Mettre à jour un admin
+PUT {{baseUrl}}/admins/admin_id_ici
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "firstName": "Updated",
+    "lastName": "Name",
+    "role": "ADMIN",
+    "isActive": true
+}
+
+### Changer le mot de passe admin
+PUT {{baseUrl}}/admins/admin_id_ici/password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "currentPassword": "CurrentPassword123!",
+    "newPassword": "NewPassword123!"
+}
+
+### Désactiver un admin (soft delete)
+DELETE {{baseUrl}}/admins/admin_id_ici
+Authorization: Bearer {{adminToken}}
+
+### Rechercher des admins
+GET {{baseUrl}}/admins?search=Admin&role=ADMIN
+Authorization: Bearer {{adminToken}}
+
+### ===== MFA Admin =====
+
+### Setup MFA
+POST {{baseUrl}}/admins/admin_id_ici/mfa/setup
+Authorization: Bearer {{adminToken}}
+
+### Activer MFA
+POST {{baseUrl}}/admins/admin_id_ici/mfa/activate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "mfaToken": "123456"
+}
+
+### Désactiver MFA
+POST {{baseUrl}}/admins/admin_id_ici/mfa/deactivate
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "mfaToken": "123456"
+} 

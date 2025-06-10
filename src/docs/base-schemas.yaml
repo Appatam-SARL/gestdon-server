@@ -1,0 +1,77 @@
+openapi: 3.0.0
+info:
+  title: ValDeli API
+  version: 1.0.0
+  description: 'API pour le service de livraison et transport ValDeli'
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: 'Une erreur est survenue'
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: email
+              message:
+                type: string
+                example: "L'email est requis"
+        stack:
+          type: string
+          description: 'Stack trace (uniquement en développement)'
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          description: "Données de la réponse (varie selon l'endpoint)"
+
+  responses:
+    Unauthorized:
+      description: 'Utilisateur non authentifié'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: 'Accès interdit'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: 'Ressource non trouvée'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: 'Erreur de validation'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ServerError:
+      description: 'Erreur serveur'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

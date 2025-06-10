@@ -1,0 +1,98 @@
+openapi: 3.0.0
+info:
+  title: ValDeli API
+  version: 1.0.0
+  description: 'API pour le service de livraison et transport ValDeli'
+
+components:
+  schemas:
+    Log:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: 'Identifiant unique du log'
+          example: '60d21b4967d0d8992e610c85'
+        level:
+          type: string
+          enum: [INFO, WARNING, ERROR, CRITICAL]
+          description: 'Niveau de gravité du log'
+          example: 'INFO'
+        message:
+          type: string
+          description: 'Message du log'
+          example: 'Nouvelle commande créée'
+        module:
+          type: string
+          description: 'Module concerné par le log'
+          example: 'order-service'
+        action:
+          type: string
+          description: 'Action qui a généré le log'
+          example: 'create-order'
+        userId:
+          type: string
+          description: "Identifiant de l'utilisateur associé au log"
+          example: '60d21b4967d0d8992e610c85'
+        userType:
+          type: string
+          enum: [USER, DRIVER, PARTNER_MEMBER, ADMIN]
+          description: "Type d'utilisateur associé au log"
+          example: 'ADMIN'
+        metadata:
+          type: object
+          description: 'Métadonnées additionnelles du log'
+          example:
+            orderId: '60d21b4967d0d8992e610c85'
+            amount: 45.99
+            status: 'CREATED'
+        ip:
+          type: string
+          description: 'Adresse IP de la requête'
+          example: '192.168.1.1'
+        userAgent:
+          type: string
+          description: 'User-Agent du navigateur'
+          example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        createdAt:
+          type: string
+          format: date-time
+          description: 'Date et heure de création du log'
+          example: '2023-06-01T13:45:00.000Z'
+
+    LogStats:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 'Nombre total de logs'
+          example: 2354
+        byLevel:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 'Répartition des logs par niveau'
+          example:
+            INFO: 1856
+            WARNING: 342
+            ERROR: 145
+            CRITICAL: 11
+        byModule:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 'Répartition des logs par module'
+          example:
+            'order-service': 765
+            'user-service': 523
+            'payment-service': 432
+            'notification-service': 634
+        byDate:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 'Répartition des logs par date'
+          example:
+            '2023-06-01': 124
+            '2023-06-02': 156
+            '2023-06-03': 132

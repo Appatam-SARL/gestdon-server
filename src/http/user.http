@@ -1,0 +1,157 @@
+### ===== Auth Utilisateur =====
+@baseUrl = http://localhost:4000/v1/api
+@userEmail = traoreoscar009@gmail.com
+@userPhone = 002250747510000
+@userPassword = Val!1234
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3ZjE3MTY1MTQyNGZlYzdlMjBmYzE3NCIsImlhdCI6MTc0Mzg5NDU2OSwiZXhwIjoxNzQ2NDg2NTY5fQ.A4IIG4QO1si2hxDIysPXUeec19yXu0ck7sLD1zv6ayo
+@adminToken = votre_token_admin_ici
+
+### Inscription
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+    "email": "{{userEmail}}",
+    "password": "{{userPassword}}",
+    "firstName": "Test",
+    "lastName": "User",
+    "phone": "{{userPhone}}"
+}
+
+### Connexion avec Email
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "login": "{{userEmail}}",
+    "password": "{{userPassword}}"
+}
+
+### Connexion avec Téléphone
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "login": "{{userPhone}}",
+    "password": "{{userPassword}}"
+}
+
+### Mot de passe oublié
+POST {{baseUrl}}/users/forgot-password
+Content-Type: application/json
+
+{
+    "email": "{{userEmail}}"
+}
+
+### Réinitialiser le mot de passe
+POST {{baseUrl}}/users/reset-password
+Content-Type: application/json
+
+{
+    "token": "reset_token_ici",
+    "password": "NewPassword123!"
+}
+
+### ===== Gestion du Profil =====
+
+### Vérifier la validité du token
+GET {{baseUrl}}/users/verify-token
+Authorization: Bearer {{userToken}}
+
+### Obtenir mon profil
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{userToken}}
+
+### Mettre à jour mon profil
+PUT {{baseUrl}}/users/me
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "firstName": "Updated",
+    "lastName": "Name",
+    "phone": "+33687654321",
+    "address": {
+        "street": "123 Rue Example",
+        "city": "Paris",
+        "postalCode": "75001",
+        "country": "France"
+    }
+}
+
+### Changer mon mot de passe
+PUT {{baseUrl}}/users/me/password
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "currentPassword": "CurrentPassword123!",
+    "newPassword": "NewPassword123!"
+}
+
+### Désactiver mon compte
+DELETE {{baseUrl}}/users/me
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "password": "{{userPassword}}"
+}
+
+### ===== MFA Utilisateur =====
+
+### Setup MFA
+POST {{baseUrl}}/users/me/mfa/setup
+Authorization: Bearer {{userToken}}
+
+### Activer MFA
+POST {{baseUrl}}/users/me/mfa/activate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "mfaToken": "123456"
+}
+
+### Désactiver MFA
+POST {{baseUrl}}/users/me/mfa/deactivate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+    "mfaToken": "123456"
+}
+
+### ===== Admin Actions sur Utilisateurs =====
+
+### Liste des utilisateurs (Admin only)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+
+### Rechercher des utilisateurs (Admin only)
+GET {{baseUrl}}/users?search=Test&status=active
+Authorization: Bearer {{adminToken}}
+
+### Obtenir un utilisateur par ID (Admin only)
+GET {{baseUrl}}/users/user_id_ici
+Authorization: Bearer {{adminToken}}
+
+### Mettre à jour un utilisateur (Admin only)
+PUT {{baseUrl}}/users/user_id_ici
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "status": "suspended",
+    "role": "USER"
+}
+
+### Supprimer un utilisateur (Admin only)
+DELETE {{baseUrl}}/users/user_id_ici
+Authorization: Bearer {{adminToken}}
+
+### Vérifier l'adresse email
+GET {{baseUrl}}/users/verify-email/your_verification_token_here
+
+GET {{baseUrl}}/users/verify-email/your_verification_token_here 

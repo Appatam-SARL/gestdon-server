@@ -1,0 +1,97 @@
+### Variables communes
+@baseUrl = {{baseUrl}}
+@adminToken = {{adminToken}}
+@userId = {{userId}}
+@productId = {{productId}}
+
+### Connexion administrateur
+# @name loginAdmin
+POST {{baseUrl}}/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@valdeli.com",
+  "password": "AdminSecure123!"
+}
+
+### Obtenir tous les utilisateurs
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+
+### Obtenir un utilisateur par ID
+GET {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+### Rechercher des utilisateurs
+GET {{baseUrl}}/admin/users/search?query=jean
+Authorization: Bearer {{adminToken}}
+
+### Désactiver un compte utilisateur
+PATCH {{baseUrl}}/admin/users/{{userId}}/deactivate
+Authorization: Bearer {{adminToken}}
+
+### Réactiver un compte utilisateur
+PATCH {{baseUrl}}/admin/users/{{userId}}/activate
+Authorization: Bearer {{adminToken}}
+
+### Supprimer un compte utilisateur
+DELETE {{baseUrl}}/admin/users/{{userId}}
+Authorization: Bearer {{adminToken}}
+
+### Tableau de bord - Statistiques générales
+GET {{baseUrl}}/admin/dashboard/stats
+Authorization: Bearer {{adminToken}}
+
+### Tableau de bord - Ventes par période
+GET {{baseUrl}}/admin/dashboard/sales?period=month
+Authorization: Bearer {{adminToken}}
+
+### Tableau de bord - Produits les plus vendus
+GET {{baseUrl}}/admin/dashboard/top-products?limit=10
+Authorization: Bearer {{adminToken}}
+
+### Tableau de bord - Nouveaux utilisateurs
+GET {{baseUrl}}/admin/dashboard/new-users?period=week
+Authorization: Bearer {{adminToken}}
+
+### Gestion des logs - Obtenir tous les logs
+GET {{baseUrl}}/admin/logs
+Authorization: Bearer {{adminToken}}
+
+### Gestion des logs - Obtenir les logs par type
+GET {{baseUrl}}/admin/logs?type=error
+Authorization: Bearer {{adminToken}}
+
+### Gestion des logs - Obtenir les logs par période
+GET {{baseUrl}}/admin/logs?startDate=2023-01-01&endDate=2023-01-31
+Authorization: Bearer {{adminToken}}
+
+### Gestion des promotions - Créer une promotion
+POST {{baseUrl}}/admin/promotions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Soldes d'été",
+  "description": "20% de réduction sur tous les produits",
+  "discountPercentage": 20,
+  "startDate": "2023-06-01T00:00:00.000Z",
+  "endDate": "2023-06-30T23:59:59.000Z",
+  "applicableProducts": ["all"],
+  "minimumPurchase": 0,
+  "code": "ETE2023"
+}
+
+### Gestion des promotions - Obtenir toutes les promotions
+GET {{baseUrl}}/admin/promotions
+Authorization: Bearer {{adminToken}}
+
+### Gestion des promotions - Appliquer une promotion à un produit
+POST {{baseUrl}}/admin/products/{{productId}}/promote
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "promotionId": "{{$dotenv promotionId}}",
+  "featured": true
+} 
