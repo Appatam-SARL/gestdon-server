@@ -46,7 +46,7 @@ export class NotificationService {
     try {
       let user;
       switch (userType) {
-        case 'USER':
+        case 'User':
           user = await User.findById(userId);
           break;
         default:
@@ -83,7 +83,7 @@ export class NotificationService {
     try {
       let user;
       switch (userType) {
-        case 'USER':
+        case 'User':
           user = await User.findById(userId);
           break;
         default:
@@ -121,6 +121,10 @@ export class NotificationService {
   }
 
   async sendNotification(notification: INotification): Promise<void> {
+    console.log(
+      '🚀 ~ NotificationService ~ sendNotification ~ notification:',
+      notification
+    );
     try {
       // Création de la notification en DB
       await Notification.create(notification);
@@ -231,7 +235,7 @@ export class NotificationService {
     try {
       let user;
       switch (notification.userType) {
-        case 'USER':
+        case 'User':
           user = await User.findById(notification.userId);
           break;
         default:
@@ -307,7 +311,7 @@ export class NotificationService {
     try {
       let updateQuery;
       switch (userType) {
-        case 'USER':
+        case 'User':
           updateQuery = User.findByIdAndUpdate(userId, {
             $pull: { pushTokens: { $in: invalidTokens } },
           });
@@ -334,6 +338,9 @@ export class NotificationService {
     }
   }
 
+  /**
+   * Récupère les notifications filtrées selon le rôle et le statut
+   */
   async getNotifications(
     userId: string,
     userType: UserType,
@@ -342,12 +349,16 @@ export class NotificationService {
   ): Promise<{ notifications: INotification[]; total: number }> {
     try {
       const skip = (page - 1) * limit;
+      // Filtrage selon le statut et le rôle
+      const query: any = { userType, reviewedBy: userId };
+
       const [notifications, total] = await Promise.all([
-        Notification.find({ userId, userType })
+        Notification.find(query)
+          .populate('userId')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        Notification.countDocuments({ userId, userType }),
+        Notification.countDocuments(query),
       ]);
 
       return { notifications, total };
@@ -374,7 +385,7 @@ export class NotificationService {
     try {
       let updateQuery;
       switch (userType) {
-        case 'USER':
+        case 'User':
           updateQuery = User.findByIdAndUpdate(userId, {
             $set: { notificationPreferences: preferences },
           });
@@ -408,13 +419,13 @@ export class NotificationService {
   }
 
   async markAsRead(
-    userId: string,
+    reviewedBy: string,
     userType: UserType,
     notificationId: string
   ): Promise<void> {
     try {
       const notification = await Notification.findOneAndUpdate(
-        { _id: notificationId, userId, userType },
+        { _id: notificationId, reviewedBy, userType },
         { read: true },
         { new: true }
       );

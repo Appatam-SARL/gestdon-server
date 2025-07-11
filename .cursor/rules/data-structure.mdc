@@ -1,0 +1,63 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Structure des Données
+
+## Données du Staff
+```typescript
+const staffData = [
+  { role: 'Administrateurs', count: 5 },
+  { role: 'Coordinateurs', count: 12 },
+  { role: 'Bénévoles', count: 45 },
+  { role: 'Support', count: 8 },
+];
+```
+
+## Données des Activités
+```typescript
+const activitiesData = [
+  { type: 'Dons', count: 150 },
+  { type: 'Promesses', count: 75 },
+  { type: 'Audiences', count: 45 },
+  { type: 'Événements', count: 30 },
+];
+```
+
+## Données des Bénéficiaires
+```typescript
+const beneficiariesData = [
+  { category: 'Enfants', count: 120 },
+  { category: 'Familles', count: 85 },
+  { category: 'Communautés', count: 15 },
+];
+```
+
+## Configuration des Graphiques
+```typescript
+const chartConfig = {
+  deliveries: {
+    label: 'Nombre',
+    color: 'hsl(var(--chart-1))',
+  },
+};
+```
+
+## Structure des Rapports
+Les rapports sont affichés dans un tableau avec les colonnes suivantes :
+- Type : Type de rapport (Don, Promesse, etc.)
+- Date : Date du rapport
+- Responsable : Personne en charge
+- Description : Description détaillée
+- Statut : État du rapport (Complété, En cours, etc.)
+- Action : Bouton pour voir les détails
+
+## Intégration avec le Backend
+Les données sont actuellement statiques mais peuvent être facilement connectées à une API :
+1. Créer des fonctions de récupération des données
+2. Utiliser des hooks React pour la gestion d'état
+3. Implémenter la pagination pour les tableaux
+4. Ajouter des filtres dynamiques
+5. Mettre en place la mise à jour en temps réel
+

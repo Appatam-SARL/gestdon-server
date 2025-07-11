@@ -114,22 +114,9 @@ import { DocOwnerTypeEnum, DocStatusEnum, DocTypeEnum } from '../utils/enum';
  *           description: "Stack trace (uniquement en développement)"
  */
 
-export type tDocOwnerType =
-  | 'DRIVER'
-  | 'VEHICLE'
-  | 'PARTNER'
-  | 'ADMIN'
-  | 'COMPANY';
+export type tDocOwnerType = 'CONTRIBUTOR' | 'USER' | 'ADMIN';
 
-export type tDocType =
-  | 'DRIVER_LICENSE'
-  | 'VEHICLE_INSURANCE'
-  | 'VEHICLE_REGISTRATION'
-  | 'OTHER'
-  | 'ID_CARD'
-  | 'PASSPORT'
-  | 'RESIDENCE_PERMIT'
-  | 'NATIONAL_ID';
+export type tDocType = 'LOGO' | 'CARD_CNI' | 'PASSPORT' | 'DFE' | 'RCCM' | 'CARD_CMU' | 'OTHER';
 
 export type tDocStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
 

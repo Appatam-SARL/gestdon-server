@@ -464,8 +464,6 @@ export class AdminController {
       // Envoyer l'email d'invitation
       try {
         const emailTemplate = getAdminInvitationTemplate({
-          // Use the new template
-          invitedEmail: email,
           invitingAdminFirstName: invitingAdmin.firstName || 'Un', // Handle potential missing names
           invitingAdminLastName: invitingAdmin.lastName || 'administrateur',
           registrationUrl,

@@ -243,4 +243,13 @@ router.patch(
   controller.updateConversation.bind(controller)
 );
 
+// Fermer la conversation
+router.patch(
+  '/conversations/:conversationId/closed',
+  validateRequest({
+    params: chatValidation.closed.shape.params,
+  }),
+  controller.closedConversation.bind(controller)
+);
+
 export const chatRoutes = router;

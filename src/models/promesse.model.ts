@@ -75,7 +75,7 @@ const PromesseSchema: Schema = new Schema<IPromesse>(
     status: {
       type: String,
       required: true,
-      enum: ['PENDING', 'APPROVED', 'REJECTED'],
+      enum: ['PENDING', 'APPROVED', 'REJECTED', 'RECEIVED'],
       default: 'PENDING',
     },
     contributorId: {

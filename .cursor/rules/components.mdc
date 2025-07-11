@@ -1,0 +1,53 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Composants UI Guide
+
+## Composants de Base
+
+### Cards
+Les cartes sont utilisées pour afficher des informations groupées. Composants disponibles :
+- `Card` : Conteneur principal
+- `CardHeader` : En-tête de la carte
+- `CardContent` : Contenu de la carte
+- `CardTitle` : Titre de la carte
+
+### Boutons
+- `Button` : Bouton standard avec différentes variantes
+  - `variant='outline'` : Style contour
+  - `variant='ghost'` : Style transparent
+  - `size='sm'` : Taille petite
+
+### Graphiques
+- `ChartContainer` : Conteneur pour les graphiques
+- `ChartTooltipContent` : Contenu des infobulles des graphiques
+- Composants Recharts :
+  - `BarChart` : Graphique en barres
+  - `LineChart` : Graphique linéaire
+  - `ResponsiveContainer` : Conteneur responsive
+  - `Tooltip` : Infobulles
+  - `Legend` : Légende
+  - `XAxis`/`YAxis` : Axes
+  - `CartesianGrid` : Grille
+
+## Icônes
+Les icônes sont importées de `lucide-react` :
+- `Users` : Pour les sections staff
+- `Activity` : Pour les activités
+- `Heart` : Pour les bénéficiaires
+- `Calendar` : Pour l'agenda
+- `Search` : Pour la recherche
+- `Filter` : Pour les filtres
+- `Download` : Pour l'export
+- `Eye` : Pour voir les détails
+
+## Styles
+Les composants utilisent Tailwind CSS pour le style :
+- Classes de mise en page : `flex`, `grid`, `space-y-6`
+- Classes de taille : `text-sm`, `text-2xl`, `h-4`, `w-4`
+- Classes de couleur : `text-muted-foreground`, `text-green-500`
+- Classes de bordure : `rounded-md`, `border`
+- Classes d'espacement : `p-4`, `m-2`, `gap-4`
+

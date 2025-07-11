@@ -13,26 +13,33 @@ export class ActivityTypeController {
       const activityType = await ActivityTypeService.createActivityType(
         validatedData
       );
-      res.status(201).json(activityType);
+      res.status(201).json({
+        success: true,
+        data: activityType,
+        message: "Le type d'activité a été créé avec succès",
+      });
     } catch (error) {
       if (error instanceof ZodError) {
-        res.status(400).json({ errors: error.errors });
+        res.status(400).json({ success: false, errors: error.errors });
       } else {
-        res
-          .status(500)
-          .json({ message: 'Error creating activity type', error });
+        res.status(500).json({
+          message: 'Error creating activity type',
+          data: error,
+          success: false,
+        });
       }
     }
   }
 
   static async getAllActivityTypes(req: Request, res: Response): Promise<void> {
     try {
-      const { search, page = '1', limit = '10' } = req.query;
+      const { search, page = '1', limit = '10', contributorId } = req.query;
 
       const options = {
         search: search as string,
         page: parseInt(page as string, 10),
         limit: parseInt(limit as string, 10),
+        contributorId: contributorId as string,
       };
 
       const activityTypes = await ActivityTypeService.getAllActivityTypes(
@@ -70,14 +77,20 @@ export class ActivityTypeController {
         res.status(404).json({ message: 'Activity type not found' });
         return;
       }
-      res.status(200).json(activityType);
+      res.status(200).json({
+        success: true,
+        data: activityType,
+        message: "Le type d'activité a été mis à jour avec succès",
+      });
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({ errors: error.errors });
       } else {
-        res
-          .status(500)
-          .json({ message: 'Error updating activity type', error });
+        res.status(500).json({
+          message: 'Error updating activity type',
+          data: error,
+          success: false,
+        });
       }
     }
   }
@@ -91,7 +104,7 @@ export class ActivityTypeController {
         res.status(404).json({ message: 'Activity type not found' });
         return;
       }
-      res.status(200).json({ message: 'Activity type deleted successfully' });
+      res.status(200).json({ message: "Le type d'activité a été supprimé" });
     } catch (error) {
       res.status(500).json({ message: 'Error deleting activity type', error });
     }

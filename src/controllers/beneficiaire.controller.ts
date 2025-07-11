@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import {
   Beneficiaire,
   BeneficiaireZodSchema,
+  RepresentantZodSchema,
+  UpdateBeneficiaireZodSchema,
 } from '../models/beneficiaire.model';
 import { BeneficiaireService } from '../services/beneficiaire.service';
 
@@ -15,12 +17,18 @@ export class BeneficiaireController {
         search = '',
         sortBy = 'createdAt',
         sortOrder = 'desc',
+        contributorId,
       } = req.query;
 
       console.log(req.query);
 
       // Construction du filtre
       const filter: any = {};
+
+      // recherche par contributorId
+      if (contributorId) {
+        filter.contributorId = contributorId;
+      }
 
       // Recherche sur email, prénom ou nom
       if (search) {
@@ -34,13 +42,14 @@ export class BeneficiaireController {
       }
 
       if (period) {
-        if (filter.from || filter.to) {
+        const { from, to } = period as { from: string; to: string };
+        if (from || to) {
           filter.createdAt = {};
-          if (filter.from) {
-            filter.createdAt.$gte = filter.startDate;
+          if (from) {
+            filter.createdAt.$gte = from;
           }
-          if (filter.to) {
-            filter.createdAt.$lte = filter.endDate;
+          if (to) {
+            filter.createdAt.$lte = to;
           }
         }
       }
@@ -55,11 +64,7 @@ export class BeneficiaireController {
 
       // Exécution de la requête
       const [beneficiaires, total] = await Promise.all([
-        Beneficiaire.find(filter)
-          .select('-password')
-          .sort(sort)
-          .skip(skip)
-          .limit(Number(limit)),
+        Beneficiaire.find(filter).sort(sort).skip(skip).limit(Number(limit)),
         Beneficiaire.countDocuments(filter),
       ]);
 
@@ -130,7 +135,7 @@ export class BeneficiaireController {
   static async update(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const validationResult = BeneficiaireZodSchema.safeParse(req.body);
+      const validationResult = UpdateBeneficiaireZodSchema.safeParse(req.body);
 
       if (!validationResult.success) {
         res.status(400).json({ errors: validationResult.error.errors });
@@ -148,9 +153,98 @@ export class BeneficiaireController {
         return;
       }
 
-      res.status(200).json(updatedBeneficiaire);
+      res.status(200).json({
+        success: true,
+        data: updatedBeneficiaire,
+        message: 'Beneficiaire updated successfully',
+      });
     } catch (error) {
       res.status(500).json({ message: 'Error updating beneficiaire', error });
+    }
+  }
+
+  static async addRepresentantBeneficiaire(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+      const beneficiaire = await BeneficiaireService.getById(id);
+      if (!beneficiaire) {
+        res.status(404).json({
+          message: 'Beneficiaire not found',
+          data: null,
+          success: false,
+        });
+        return;
+      }
+      const validationResult = RepresentantZodSchema.safeParse(req.body);
+
+      if (!validationResult.success) {
+        res.status(400).json({ errors: validationResult.error.errors });
+        return;
+      }
+
+      const beneficiaireData = validationResult.data;
+      const newRepresentant = await BeneficiaireService.addRepresentant(
+        id,
+        beneficiaireData
+      );
+      res
+        .status(201)
+        .json({ data: newRepresentant, message: 'Success', success: true });
+    } catch (error) {
+      res.status(500).json({ message: 'Error adding beneficiaire', error });
+    }
+  }
+
+  static async updateRepresentanyBeneficiaire(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { _id, ...representantData } = req.body;
+      if (!_id || typeof _id !== 'string') {
+        res
+          .status(400)
+          .json({ message: '_id is required and must be a string' });
+        return;
+      }
+      const beneficiaire = await BeneficiaireService.getById(id);
+      if (!beneficiaire) {
+        res.status(404).json({
+          message: 'Beneficiaire not found',
+          data: null,
+          success: false,
+        });
+        return;
+      }
+      const validationResult =
+        RepresentantZodSchema.safeParse(representantData);
+      if (!validationResult.success) {
+        res.status(400).json({ errors: validationResult.error.errors });
+        return;
+      }
+      const updateData = validationResult.data;
+      const updatedBeneficiaire = await BeneficiaireService.updateRepresentant(
+        id,
+        _id,
+        updateData
+      );
+      if (!updatedBeneficiaire) {
+        res
+          .status(404)
+          .json({ message: 'Representant not found or invalid _id' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        data: updatedBeneficiaire,
+        message: 'Representant updated successfully',
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating representant', error });
     }
   }
 
@@ -167,6 +261,48 @@ export class BeneficiaireController {
       res.status(200).json({ message: 'Beneficiaire deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Error deleting beneficiaire', error });
+    }
+  }
+
+  static async deleteRepresentantBeneficiaire(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { _id } = req.body;
+      if (!_id || typeof _id !== 'string') {
+        res
+          .status(400)
+          .json({ message: '_id is required and must be a string' });
+        return;
+      }
+      const beneficiaire = await BeneficiaireService.getById(id);
+      if (!beneficiaire) {
+        res.status(404).json({
+          message: 'Beneficiaire not found',
+          data: null,
+          success: false,
+        });
+        return;
+      }
+      const deletedBeneficiaire = await BeneficiaireService.deleteRepresentant(
+        id,
+        _id
+      );
+      if (!deletedBeneficiaire) {
+        res
+          .status(404)
+          .json({ message: 'Representant not found or invalid _id' });
+        return;
+      }
+      res.status(200).json({
+        success: true,
+        data: deletedBeneficiaire,
+        message: 'Representant deleted successfully',
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error deleting representant', error });
     }
   }
 }

@@ -1,12 +1,24 @@
-import { Document, Schema, model, models } from 'mongoose';
+import mongoose, { Document, Schema, model, models } from 'mongoose';
 
-interface IActivity extends Document {
+export interface IActivity extends Document {
   title: string;
   description?: string;
-  status: 'D' | 'A' | 'R';
-  entityId: Schema.Types.ObjectId;
+  status: 'Draft' | 'Approved' | 'Rejected' | 'Waiting';
+  contributorId: Schema.Types.ObjectId;
+  beneficiaryId?: Schema.Types.ObjectId;
   createdBy: Schema.Types.ObjectId;
   activityTypeId: Schema.Types.ObjectId;
+  customFields: Map<string, any>;
+  assigneeId?: Schema.Types.ObjectId;
+  representative?: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+  };
+  motif?: string;
+  startDate?: Date;
+  endDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,23 +36,41 @@ const activitySchema = new Schema<IActivity>(
     status: {
       type: String,
       required: true,
-      enum: ['D', 'A', 'R'],
+      enum: ['Draft', 'Approved', 'Rejected', 'Waiting', 'Archived'],
+      default: 'Waiting',
     },
-    entityId: {
+    contributorId: {
       type: Schema.Types.ObjectId,
       required: true,
-      ref: 'Entity', // Assuming a related 'Entity' model
+      ref: 'Contributor', // Assuming a related 'Contributor' model
     },
-    createdBy: {
+    beneficiaryId: {
       type: Schema.Types.ObjectId,
-      required: true,
-      ref: 'User', // Assuming a related 'User' model for created_by
+      required: false,
+      ref: 'Beneficiary', // Assuming a related 'Beneficiary' model
     },
     activityTypeId: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: 'ActivityType', // Assuming a related 'ActivityType' model
     },
+    customFields: {
+      type: Map,
+      of: mongoose.Schema.Types.Mixed,
+    },
+    assigneeId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    representative: {
+      firstName: String,
+      lastName: String,
+      phone: String,
+      email: String,
+    },
+    startDate: Date,
+    endDate: Date,
+    motif: String,
   },
   { timestamps: true }
 );

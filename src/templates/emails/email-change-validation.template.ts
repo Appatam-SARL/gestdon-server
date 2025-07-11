@@ -36,8 +36,7 @@ export const getEmailChangeValidationTemplate = ({
               padding: 20px;
             }
             .header {
-              background-color: #FF6B6B;
-              color: white;
+              color: #2c3e50;
               padding: 20px;
               text-align: center;
             }

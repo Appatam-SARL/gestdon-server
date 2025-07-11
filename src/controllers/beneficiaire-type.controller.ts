@@ -12,7 +12,9 @@ export class BeneficiaireTypeController {
     try {
       if (!req.user?.contributorId) {
         res.status(401).json({
+          success: false,
           message: 'Vous devez être connecté pour effectuer cette action',
+          data: null,
         });
         return;
       }
@@ -28,6 +30,7 @@ export class BeneficiaireTypeController {
       );
 
       res.status(201).json({
+        success: true,
         message: 'Type de bénéficiaire créé avec succès',
         data: beneficiaireType,
       });
@@ -111,7 +114,9 @@ export class BeneficiaireTypeController {
 
       if (!beneficiaireType) {
         res.status(404).json({
+          success: false,
           message: 'Type de bénéficiaire non trouvé',
+          data: null,
         });
         return;
       }
@@ -119,6 +124,7 @@ export class BeneficiaireTypeController {
       res.json({
         message: 'Type de bénéficiaire mis à jour avec succès',
         data: beneficiaireType,
+        success: true,
       });
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -140,7 +146,9 @@ export class BeneficiaireTypeController {
     try {
       if (!req.user?.contributorId) {
         res.status(401).json({
+          success: false,
           message: 'Vous devez être connecté pour effectuer cette action',
+          data: null,
         });
         return;
       }
@@ -152,12 +160,15 @@ export class BeneficiaireTypeController {
 
       if (!beneficiaireType) {
         res.status(404).json({
+          success: false,
           message: 'Type de bénéficiaire non trouvé',
+          data: null,
         });
         return;
       }
 
       res.json({
+        success: true,
         message: 'Type de bénéficiaire supprimé avec succès',
         data: beneficiaireType,
       });

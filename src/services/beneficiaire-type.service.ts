@@ -51,11 +51,17 @@ export class BeneficiaireTypeService {
     limit: number;
   }> {
     try {
-      const { search = '', page = 1, limit = 10 } = queryParams;
+      const {
+        search = '',
+        page = 1,
+        limit = 10,
+        typeBeneficiaireId = '',
+      } = queryParams;
       const skip = (Number(page) - 1) * Number(limit);
 
       const query = {
         contributorId,
+        ...(typeBeneficiaireId ? { _id: typeBeneficiaireId } : {}),
         ...(search ? { label: { $regex: search, $options: 'i' } } : {}),
       };
 

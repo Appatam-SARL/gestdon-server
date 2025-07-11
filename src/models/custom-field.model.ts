@@ -9,6 +9,7 @@ type EntityType =
   | 'OTHER';
 
 interface ICustomFieldOption {
+  _id?: mongoose.Types.ObjectId;
   name: string;
   label: string;
   type: string;

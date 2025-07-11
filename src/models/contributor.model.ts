@@ -32,6 +32,10 @@ const contributorSchema: Schema = new Schema({
   description: { type: String },
   email: { type: String, required: true, unique: true },
   phoneNumber: { type: String },
+  logo: {
+    fileUrl: { type: String },
+    fileId: { type: String },
+  },
   address: {
     street: { type: String, required: true },
     city: { type: String, required: true },

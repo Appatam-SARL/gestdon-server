@@ -48,7 +48,7 @@ class PromesseService {
   }
 
   static async getPromesseById(id: string): Promise<IPromesse | null> {
-    return Promesse.findById(id);
+    return Promesse.findById(id).populate('beneficiaireId', 'fullName');
   }
 
   static async updatePromesse(

@@ -22,6 +22,7 @@ export const updateBeneficiaireTypeSchema =
 export const beneficiaireTypeQuerySchema = z.object({
   search: z.string().optional(),
   page: z.string().transform(Number).pipe(z.number().min(1)).optional(),
+  typeBeneficiaireId: z.string().optional(),
   limit: z
     .string()
     .transform(Number)

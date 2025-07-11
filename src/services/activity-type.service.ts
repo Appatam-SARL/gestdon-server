@@ -8,6 +8,8 @@ import {
 
 interface IGetAllActivityTypesOptions {
   search?: string;
+  contributorId?: string;
+  activityTypeId?: string;
   page?: number;
   limit?: number;
 }
@@ -36,9 +38,27 @@ export class ActivityTypeService {
   static async getAllActivityTypes(
     options: IGetAllActivityTypesOptions = {}
   ): Promise<IPaginatedResponse<IActivityType>> {
-    const { search = '', page = 1, limit = 10 } = options;
+    const {
+      search = '',
+      page = 1,
+      limit = 10,
+      contributorId,
+      activityTypeId,
+    } = options;
 
-    const query = search ? { label: { $regex: search, $options: 'i' } } : {};
+    const query: any = {};
+
+    if (contributorId) {
+      query.contributorId = contributorId;
+    }
+
+    if (activityTypeId) {
+      query._id = activityTypeId;
+    }
+
+    if (search) {
+      query.label = { $regex: search, $options: 'i' };
+    }
 
     const skip = (page - 1) * limit;
 

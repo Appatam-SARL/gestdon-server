@@ -18,6 +18,8 @@ router.post(
   UserController.login
 );
 
+router.post('/verify-mfa', UserController.verifyMfaAndLogin);
+
 // Route publique de vérification d'email
 router.get('/verify-email/:token', UserController.verifyEmail);
 router.post(
@@ -75,14 +77,14 @@ router.put(
 );
 
 // Routes MFA
-router.post('/mfa/:id/enable', UserController.enableMFA);
 router.post(
-  '/mfa/verify',
+  '/mfa/:id/verify',
   validateRequest(userValidation.verifyMFA),
   UserController.verifyAndEnableMFA
 );
+router.post('/mfa/:id/enable', UserController.enableMFA);
 router.post(
-  '/mfa/disable',
+  '/:id/mfa/disable',
   validateRequest(userValidation.disableMFA),
   UserController.disableMFA
 );

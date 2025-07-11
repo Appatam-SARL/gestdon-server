@@ -17,9 +17,9 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
 
   // Liens de pied de page par défaut
   const defaultFooterLinks = [
-    { text: 'Site Web', url: 'https://valdeli.com' },
-    { text: 'Conditions', url: 'https://valdeli.com/conditions' },
-    { text: 'Confidentialité', url: 'https://valdeli.com/confidentialite' },
+    { text: 'Site Web', url: 'https://appatam.com' },
+    { text: 'Conditions', url: 'https://appatam.com/conditions' },
+    { text: 'Confidentialité', url: 'https://appatam.com/confidentialite' },
   ];
 
   // Utiliser les liens personnalisés ou les liens par défaut
@@ -52,7 +52,7 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
       <style>
         /* Styles de base */
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-family: Arial, sans-serif;
           line-height: 1.6;
           color: #333;
           margin: 0;
@@ -69,22 +69,9 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .header {
-          background: linear-gradient(135deg, #FF5B00 0%, #FF8C00 100%);
-          padding: 30px 20px;
-          text-align: center;
-        }
-        
         .logo {
           max-width: 120px;
           margin-bottom: 15px;
-        }
-        
-        .header h1 {
-          color: white;
-          margin: 0;
-          font-size: 24px;
-          font-weight: 600;
         }
         
         .content {
@@ -117,7 +104,7 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
         
         .button {
           display: inline-block;
-          background-color: #FF5B00;
+          background-color: #6c2bd9;
           color: white !important;
           text-decoration: none;
           padding: 12px 25px;
@@ -128,30 +115,13 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
         }
         
         .button:hover {
-          background-color: #E65100;
+          background-color: #822bd9;
         }
         
         .divider {
           height: 1px;
           background-color: #eaeaea;
           margin: 25px 0;
-        }
-        
-        .footer {
-          background-color: #f4f4f4;
-          padding: 20px;
-          text-align: center;
-          color: #777;
-          font-size: 12px;
-        }
-        
-        .social-icons {
-          margin: 15px 0;
-        }
-        
-        .social-icons a {
-          display: inline-block;
-          margin: 0 8px;
         }
         
         /* Styles pour mobile */
@@ -173,26 +143,22 @@ export function getBaseEmailTemplate(context: IBaseEmailContext): string {
       
       <div class="container">
         <div class="header">
-          <h1>ValDeli</h1>
+          <h1 style="color: #2c3e50; text-align: center;">Mail Contrib</h1>
         </div>
         
         <div class="content">
           ${context.content}
         </div>
         
-        <div class="footer">
-          <p>ValDeli - Service de livraison instantanée</p>
-          <div class="social-icons">
-            <a href="https://facebook.com/valdeli" style="color: #1877F2;">Facebook</a>
-            <a href="https://twitter.com/valdeli" style="color: #1DA1F2;">Twitter</a>
-            <a href="https://instagram.com/valdeli" style="color: #E1306C;">Instagram</a>
-          </div>
-          <p>
-            ${footerLinksHtml}
-          </p>
-          <p>Ce message est envoyé automatiquement, merci de ne pas y répondre.</p>
-          <p>&copy; ${currentYear} ValDeli. Tous droits réservés.</p>
-        </div>
+        <hr style="border: 1px solid #eee; margin: 30px 0;">
+        
+        <p style="color: #7f8c8d; font-size: 12px; text-align: center;">
+          © ${new Date().getFullYear()} Contrib. Tous droits réservés.<br>
+          Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+        </p>
+        <p style="color: #7f8c8d; font-size: 12px; text-align: center;">
+          Le lien de confirmation expirera dans 24 heures.
+        </p>
       </div>
     </body>
     </html>

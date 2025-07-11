@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Dashboard Structure Guide
+
+Le tableau de bord principal est défini dans [src/pages/online/dashboard/index.tsx](mdc:src/pages/online/dashboard/index.tsx).
+
+## Structure des Composants
+
+### 1. En-tête
+- Titre principal "Tableau de bord"
+- Boutons de filtrage et d'exportation
+
+### 2. Statistiques Principales (4 cartes)
+- Équipe Totale : Affiche le nombre total de membres du staff
+- Activités du Mois : Montre les statistiques des activités (dons, promesses, etc.)
+- Bénéficiaires : Présente les statistiques des bénéficiaires
+- Événements à Venir : Liste les événements programmés
+
+### 3. Graphiques
+- Graphique des Activités : Diagramme en barres montrant la répartition des activités
+- Graphique des Bénéficiaires : Diagramme linéaire montrant la distribution des bénéficiaires
+
+### 4. Tableau des Rapports
+- Liste des rapports récents
+- Colonnes : Type, Date, Responsable, Description, Statut, Action
+- Fonctionnalités de recherche et de filtrage
+
+## Données
+
+Les données sont organisées en trois ensembles principaux :
+1. `staffData` : Informations sur l'équipe
+2. `activitiesData` : Données sur les activités
+3. `beneficiariesData` : Informations sur les bénéficiaires
+
+## Composants UI Utilisés
+- `Card`, `CardHeader`, `CardContent`, `CardTitle` pour les cartes statistiques
+- `Button` pour les actions
+- `ChartContainer` et `ChartTooltipContent` pour les graphiques
+- Composants Recharts pour la visualisation des données
+
+## Navigation
+Le tableau de bord est accessible via le composant `withDashboard` qui gère l'authentification et la mise en page.
+

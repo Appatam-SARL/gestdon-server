@@ -86,10 +86,10 @@ import mongoose, { Document, Schema } from 'mongoose';
  *           description: Date de dernière mise à jour
  */
 
-export type NotificationType = 'ORDER' | 'PAYMENT' | 'SYSTEM' | 'PROMOTION';
+export type NotificationType = 'PAYMENT' | 'SYSTEM' | 'PROMOTION';
 export type NotificationChannel = 'PUSH' | 'EMAIL' | 'BOTH';
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED';
-export type UserType = 'USER' | 'DRIVER' | 'PARTNER_MEMBER' | 'ADMIN';
+export type UserType = 'User' | 'Admin';
 
 export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
@@ -104,6 +104,8 @@ export interface INotification extends Document {
   sentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  contributorId?: mongoose.Types.ObjectId;
+  reviewedBy?: mongoose.Types.ObjectId;
 }
 
 export interface INotificationPreferences extends Document {
@@ -128,7 +130,7 @@ const notificationSchema = new Schema<INotification>(
     },
     userType: {
       type: String,
-      enum: ['USER', 'DRIVER', 'PARTNER_MEMBER', 'ADMIN'],
+      enum: ['User', 'Admin'],
       required: true,
     },
     title: {
@@ -141,7 +143,7 @@ const notificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ['ORDER', 'PAYMENT', 'SYSTEM', 'PROMOTION'],
+      enum: ['PAYMENT', 'SYSTEM', 'PROMOTION'],
       required: true,
     },
     channel: {
@@ -164,6 +166,18 @@ const notificationSchema = new Schema<INotification>(
     sentAt: {
       type: Date,
     },
+    contributorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Contributor',
+      required: true,
+      default: undefined,
+    },
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -179,7 +193,7 @@ const notificationPreferencesSchema = new Schema<INotificationPreferences>(
     },
     userType: {
       type: String,
-      enum: ['USER', 'DRIVER', 'PARTNER_MEMBER', 'ADMIN'],
+      enum: ['User', 'Admin'],
       required: true,
     },
     pushEnabled: {

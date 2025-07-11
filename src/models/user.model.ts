@@ -59,6 +59,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  verifyMfaToken(token: string): boolean;
   generateAuthToken(): string;
   generateMfaSecret(): string;
   getMfaQrCodeUrl(): string | null;
@@ -217,7 +218,7 @@ userSchema.methods.comparePassword = async function (
 // Méthode pour générer un token JWT
 userSchema.methods.generateAuthToken = function (): string {
   return jwt.sign(
-    { id: this._id, type: 'user' },
+    { id: this._id, type: 'user', role: this.role },
     process.env.JWT_SECRET || 'your-secret-key',
     {
       expiresIn: '7d',
@@ -241,6 +242,12 @@ userSchema.set('toJSON', {
     return ret;
   },
 });
+
+// Vérifier un token MFA
+userSchema.methods.verifyMfaToken = function (token: string): boolean {
+  if (!this.mfaSecret) return false;
+  return authenticator.verify({ token, secret: this.mfaSecret });
+};
 
 // Générer un secret MFA
 userSchema.methods.generateMfaSecret = function (): string {

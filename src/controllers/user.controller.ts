@@ -11,6 +11,7 @@ import { EmailService } from '../services/email.service';
 import { LogService } from '../services/log.service';
 import PermissionService from '../services/permission.service';
 import { getAccountDeletionTemplate } from '../templates/emails/account-deletion.template';
+import { getAdminInvitationTemplate } from '../templates/emails/admin-invitation.template';
 import { getEmailChangeValidationTemplate } from '../templates/emails/email-change-validation.template';
 import { getUserWelcomeTemplate } from '../templates/emails/user-welcome.template';
 import { LOG_ACTIONS, LOG_ENTITY_TYPES } from '../types/log.types';
@@ -26,9 +27,9 @@ import {
 
 export class UserController {
   // Helpers privés
-  private static generateJWT(userId: string): string {
+  private static generateJWT(userId: string, role: string): string {
     return jwt.sign(
-      { id: userId, type: 'user' },
+      { id: userId, type: 'user', role },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '30d' }
     );
@@ -72,7 +73,8 @@ export class UserController {
   private static async sendWelcomeEmail(
     email: string,
     firstName: string,
-    token: string
+    token: string,
+    password: string
   ): Promise<void> {
     try {
       const verificationUrl = `${config.frontendUrl}/account-validation?token=${token}`;
@@ -80,6 +82,7 @@ export class UserController {
       const emailTemplate = getUserWelcomeTemplate({
         firstName,
         verificationUrl,
+        password,
       });
 
       await EmailService.sendEmail({
@@ -105,6 +108,7 @@ export class UserController {
         role,
         contributorId,
       } = req.body;
+      console.log('🚀 ~ UserController ~ register ~ email', email);
 
       // Vérifier si les identifiants existent déjà
       const existingError = await UserController.checkExistingCredentials(
@@ -142,14 +146,15 @@ export class UserController {
       const userId = (user as any)._id.toString();
 
       // Générer le token JWT
-      const token = UserController.generateJWT(userId);
+      const token = UserController.generateJWT(userId, user.role);
 
       // Envoyer l'email de bienvenue si l'email est fourni
       if (email && userData.emailVerificationToken) {
         await UserController.sendWelcomeEmail(
           email,
           firstName,
-          userData.emailVerificationToken
+          userData.emailVerificationToken,
+          userData.password
         );
       }
 
@@ -576,11 +581,31 @@ export class UserController {
       }).select('+password +mfaSecret +mfaEnabled');
 
       if (!user) {
+        await LogService.createLog(
+          {
+            entityType: LOG_ENTITY_TYPES.USER,
+            entityId: login, // On utilise l'email car on n'a pas l'ID
+            action: LOG_ACTIONS.LOGIN,
+            status: 'failure',
+            details: 'Membre non trouvé',
+          },
+          req
+        );
         return next(new AppError('Identifiant ou mot de passe incorrect', 401));
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
+        await LogService.createLog(
+          {
+            entityType: LOG_ENTITY_TYPES.USER,
+            entityId: user._id as string,
+            action: LOG_ACTIONS.LOGIN,
+            status: 'failure',
+            details: 'Mot de passe incorrect',
+          },
+          req
+        );
         return next(new AppError('Identifiant ou mot de passe incorrect', 401));
       }
 
@@ -594,7 +619,21 @@ export class UserController {
         return;
       }
 
-      const token = UserController.generateJWT((user as any)._id.toString());
+      const token = UserController.generateJWT(
+        (user as any)._id.toString(),
+        user.role
+      );
+
+      await LogService.createLog(
+        {
+          entityType: LOG_ENTITY_TYPES.USER,
+          entityId: user._id as string,
+          action: LOG_ACTIONS.LOGIN,
+          status: 'success',
+          details: 'Connexion réussie sans MFA',
+        },
+        req
+      );
 
       res.json({
         status: 'success',
@@ -739,6 +778,17 @@ export class UserController {
       user.password = newPassword;
       await user.save();
 
+      await LogService.createLog(
+        {
+          entityType: LOG_ENTITY_TYPES.USER,
+          entityId: userId,
+          action: LOG_ACTIONS.PASSWORD_CHANGE,
+          status: 'success',
+          details: 'La modification de votre mot de passe a réussi',
+        },
+        req
+      );
+
       res.status(200).json({
         success: true,
         message: 'Mot de passe mis à jour avec succès',
@@ -827,6 +877,18 @@ export class UserController {
         subject: 'Réinitialisation de votre mot de passe (valide 30 minutes)',
         text: `Pour réinitialiser votre mot de passe, cliquez sur ce lien : ${resetURL}`,
       });
+
+      await LogService.createLog(
+        {
+          entityType: LOG_ENTITY_TYPES.USER,
+          entityId: user._id as string, // On utilise l'email car on n'a pas l'ID
+          action: 'FORGOT_PASSWORD',
+          status: 'success',
+          details:
+            'Vous avez reçu un email contenant un lien pour réinitialiser votre mot de passe',
+        },
+        req
+      );
 
       res.status(200).json({
         status: 'success',
@@ -956,17 +1018,26 @@ export class UserController {
 
   static async disableMFA(req: Request, res: Response, next: NextFunction) {
     try {
-      const { password } = req.body;
-      const user = await User.findById(req?.params?.id);
+      const mfaToken = req.body.mfaToken;
 
+      const user = await User.findById(req?.params?.id);
       if (!user) {
         return next(new AppError('Utilisateur non trouvé', 404));
       }
 
-      // Vérifier le mot de passe avant de désactiver la MFA
-      const isPasswordValid = await user.comparePassword(password);
-      if (!isPasswordValid) {
-        return next(new AppError('Mot de passe incorrect', 400));
+      const isValidToken = user.verifyMfaToken(mfaToken);
+      if (!isValidToken) {
+        await LogService.createLog(
+          {
+            entityType: LOG_ENTITY_TYPES.ADMIN,
+            entityId: user._id as string,
+            action: LOG_ACTIONS.MFA_DEACTIVATE,
+            status: 'failure',
+            details: 'Code MFA invalide',
+          },
+          req
+        );
+        throw new Error('Code MFA invalide');
       }
 
       // Désactiver la MFA
@@ -1273,15 +1344,16 @@ export class UserController {
 
       const invitationUrl = `${frontendUrl}/register-invited?token=${token}`;
 
-      await sendEmail({
-        to: email,
-        subject: 'Invitation à rejoindre Gescom',
-        text: `Bonjour,
+      const templateInviteUserEmail = getAdminInvitationTemplate({
+        invitingAdminFirstName: user?.firstName as string,
+        invitingAdminLastName: user?.lastName as string,
+        registrationUrl: invitationUrl,
+      });
 
-Vous avez été invité à rejoindre Gescom. Pour vous connecter, cliquez sur le lien suivant : ${invitationUrl}
-
-Cordialement,
-L'équipe Gescom`,
+      await EmailService.sendEmail({
+        to: email as string,
+        subject: templateInviteUserEmail.subject,
+        html: templateInviteUserEmail.html,
       });
 
       res.status(200).json({
@@ -1371,7 +1443,8 @@ L'équipe Gescom`,
       await UserController.sendWelcomeEmail(
         newOwner.email as string,
         newOwner.firstName as string,
-        newOwner.emailVerificationToken as string
+        newOwner.emailVerificationToken as string,
+        req.body.password
       );
 
       // Response
@@ -1381,6 +1454,69 @@ L'équipe Gescom`,
       });
     } catch (error) {
       next(error);
+    }
+  }
+
+  static async verifyMfaAndLogin(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { userId, mfaToken } = req.body;
+      const user = await User.findById(userId).select('+mfaSecret');
+      if (!user || !user.isActive || !user.mfaEnabled) {
+        await LogService.createLog(
+          {
+            entityType: LOG_ENTITY_TYPES.ADMIN,
+            entityId: userId,
+            action: LOG_ACTIONS.MFA_VERIFY,
+            status: 'failure',
+            details: 'Session invalide',
+          },
+          req
+        );
+        throw new Error('Session invalide');
+      }
+
+      const isValidToken = user.verifyMfaToken(mfaToken);
+      if (!isValidToken) {
+        await LogService.createLog(
+          {
+            entityType: LOG_ENTITY_TYPES.ADMIN,
+            entityId: userId,
+            action: LOG_ACTIONS.MFA_VERIFY,
+            status: 'failure',
+            details: 'Code MFA invalide',
+          },
+          req
+        );
+        throw new Error('Code MFA invalide');
+      }
+
+      const token = UserController.generateJWT(
+        (user as any)._id.toString(),
+        user.role
+      );
+      await user.save();
+
+      await LogService.createLog(
+        {
+          entityType: LOG_ENTITY_TYPES.ADMIN,
+          entityId: userId,
+          action: LOG_ACTIONS.MFA_VERIFY,
+          status: 'success',
+          details: 'Vérification MFA réussie',
+        },
+        req
+      );
+
+      res.json({
+        token,
+        user,
+      });
+    } catch (error) {
+      res.status(400).json({ message: (error as Error).message });
     }
   }
 }

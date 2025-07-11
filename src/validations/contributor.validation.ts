@@ -18,33 +18,36 @@ const createContributorBodySchema = z.object({
   description: z.string().optional(),
   fieldOfActivity: z.string().min(1, 'Field of activity is required'),
   email: z.string().email('Invalid email format'),
-  phoneNumber: z.string().optional(), // Add regex validation if needed, e.g., .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
+  logo: z
+    .object({
+      fileId: z.string().optional(),
+      fileUrl: z.string().optional(),
+    })
+    .optional(),
+  phoneNumber: z.string().optional(),
   address: addressSchema,
   owner: z.object({
     firstName: z.string().min(2, 'Name must be at least 2 characters long'),
     lastName: z.string().min(2, 'Name must be at least 2 characters long'),
     role: z.enum(['MANAGER', 'CORDINATEUR', 'REDACTEUR', 'AGENT']),
     email: z.string().email('Invalid email format'),
-    phone: z.string().optional(), // Add regex validation if needed, e.g., .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
+    phone: z.string().optional(),
     address: addressSchema,
   }),
-  // partnerId is derived from the authenticated user, not in body
 });
 
 // Schema for updating contributor data (fields are optional)
 const updateContributorBodySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters long').optional(),
   description: z.string().optional(),
-  phoneNumber: z.string().optional(), // Add regex validation if needed
+  phoneNumber: z.string().optional(),
   address: addressSchema.optional(),
-  // email and partner are typically not changed via this endpoint
 });
 
 export const contributorValidation = {
   createContributor: {
     body: createContributorBodySchema,
   },
-
   updateContributor: {
     params: z.object({
       id: z.string().refine((value) => Types.ObjectId.isValid(value), {
@@ -55,7 +58,7 @@ export const contributorValidation = {
   },
 
   getContributor: {
-      params: z.object({
+    params: z.object({
       id: z.string().refine((value) => Types.ObjectId.isValid(value), {
         message: 'Invalid Contributor ID',
       }),
@@ -72,8 +75,6 @@ export const contributorValidation = {
         .optional(),
       search: z.string().optional(),
       status: ContributorStatusEnum.optional(),
-      // partnerId filter would be handled internally based on auth
-      // Add other potential filters here if needed
     }),
   },
 

@@ -17,13 +17,14 @@ export class NotificationController {
       // Récupérer l'ID de l'utilisateur et le type d'utilisateur à partir du middleware d'authentification
       let userId;
       let userType;
+      let userRole;
 
       if (req.userType === 'user' && req.user) {
         userId = req.user._id.toString();
-        userType = 'USER' as UserType;
+        userType = 'User' as UserType;
       } else if (req.userType === 'admin' && req.admin) {
         userId = req.admin._id.toString();
-        userType = 'ADMIN' as UserType;
+        userType = 'Admin' as UserType;
       } else {
         res.status(401).json({ error: 'Non authentifié' });
         return;
@@ -31,6 +32,11 @@ export class NotificationController {
 
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
+
+      console.log(
+        '🚀 ~ NotificationController ~ getNotifications= ~ userRole:',
+        userRole
+      );
 
       const result = await this.notificationService.getNotifications(
         userId,
@@ -57,10 +63,10 @@ export class NotificationController {
 
       if (req.userType === 'user' && req.user) {
         userId = req.user._id.toString();
-        userType = 'USER' as UserType;
+        userType = 'User' as UserType;
       } else if (req.userType === 'admin' && req.admin) {
         userId = req.admin._id.toString();
-        userType = 'ADMIN' as UserType;
+        userType = 'Admin' as UserType;
       } else {
         res.status(401).json({ error: 'Non authentifié' });
         return;
@@ -85,15 +91,15 @@ export class NotificationController {
   markAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
       // Récupérer l'ID de l'utilisateur et le type d'utilisateur à partir du middleware d'authentification
-      let userId;
+      let reviewedBy;
       let userType;
 
       if (req.userType === 'user' && req.user) {
-        userId = req.user._id.toString();
-        userType = 'USER' as UserType;
+        reviewedBy = req.user._id.toString();
+        userType = 'User' as UserType;
       } else if (req.userType === 'admin' && req.admin) {
-        userId = req.admin._id.toString();
-        userType = 'ADMIN' as UserType;
+        reviewedBy = req.admin._id.toString();
+        userType = 'Admin' as UserType;
       } else {
         res.status(401).json({ error: 'Non authentifié' });
         return;
@@ -102,7 +108,7 @@ export class NotificationController {
       const notificationId = req.params.notificationId;
 
       await this.notificationService.markAsRead(
-        userId,
+        reviewedBy,
         userType,
         notificationId
       );

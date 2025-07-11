@@ -1,40 +1,34 @@
 import { Request, Response } from 'express';
-import { ConversationType } from '../models/conversation.model';
 import { ChatService } from '../services/chat.service';
 import { ApiError } from '../utils/api-error';
+import { sendEmail } from '../utils/email';
 
 export class ChatController {
   // Créer une nouvelle conversation
   async createConversation(req: Request, res: Response) {
     try {
-      const {
-        participants,
-        type = 'GENERAL' as ConversationType,
-        order,
-        product,
-        claim,
-        subject,
-        initialMessage,
-        priority,
-        tags,
-      } = req.body;
+      const { participants, subject, initialMessage } = req.body;
 
       const sender = req.user.id;
-      const senderType = req.user.role;
 
       const conversation = await ChatService.createConversation({
         participants,
-        type,
-        order,
-        product,
-        claim,
         subject,
         initialMessage,
         sender,
-        senderType,
-        priority,
-        tags,
       });
+
+      const emails = [participants[0].email, participants[1].email];
+
+      const conversationUrl = process.env.FRONTEND_URL || 'https://val.com';
+
+      for (const email of emails) {
+        await sendEmail({
+          to: email,
+          subject: `Conversation avec ${participants[0].firstName}`,
+          text: `Bonjour ${participants[0].firstName}, nous avons créé une nouvelle conversation avec vous. Cliquez sur ce lien pour y acceder : ${conversationUrl}`,
+        });
+      }
 
       res.status(201).json({
         status: 'success',
@@ -49,18 +43,13 @@ export class ChatController {
   async addMessage(req: Request, res: Response) {
     try {
       const { conversationId } = req.params;
-      const { content, attachments } = req.body;
+      const { content } = req.body;
       const sender = req.user.id;
-      const senderType = req.user.role;
-
       const conversation = await ChatService.addMessage({
         conversationId,
         sender,
-        senderType,
         content,
-        attachments,
       });
-
       res.status(200).json({
         status: 'success',
         data: conversation,
@@ -75,32 +64,12 @@ export class ChatController {
     try {
       const userId = req.user.id;
       const userType = req.user.role;
-      const {
-        page = '1',
-        limit = '20',
-        type,
-        status,
-        priority,
-        order,
-        product,
-        claim,
-        tag,
-      } = req.query;
+      const { page = '1', limit = '20', status } = req.query;
 
       const result = await ChatService.getUserConversations(
         userId,
-        userType,
         parseInt(page as string),
-        parseInt(limit as string),
-        {
-          type: type as ConversationType,
-          status: status as 'OPEN' | 'CLOSED' | 'PENDING',
-          priority: priority as 'LOW' | 'MEDIUM' | 'HIGH',
-          order: order as string,
-          product: product as string,
-          claim: claim as string,
-          tag: tag as string,
-        }
+        parseInt(limit as string)
       );
 
       res.status(200).json({
@@ -189,12 +158,10 @@ export class ChatController {
 
       const results = await ChatService.searchConversations(
         userId,
-        userType,
         query as string,
         parseInt(page as string),
         parseInt(limit as string),
         {
-          type: type as ConversationType,
           status: status as 'OPEN' | 'CLOSED' | 'PENDING',
         }
       );
@@ -207,6 +174,25 @@ export class ChatController {
           page: parseInt(page as string),
           totalPages: Math.ceil(results.total / parseInt(limit as string)),
         },
+      });
+    } catch (error) {
+      throw new ApiError(400, (error as Error).message);
+    }
+  }
+
+  async closedConversation(req: Request, res: Response) {
+    try {
+      const { conversationId } = req.params;
+      const userId = req.user.id;
+
+      const conversation = await ChatService.closedConversation(
+        conversationId,
+        userId
+      );
+
+      res.status(200).json({
+        status: 'success',
+        data: conversation,
       });
     } catch (error) {
       throw new ApiError(400, (error as Error).message);

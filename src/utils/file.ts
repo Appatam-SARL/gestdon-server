@@ -37,17 +37,7 @@ export interface MulterRequestFields {
   file?: MulterFile;
 }
 
-const folders: string[] = [
-  'products',
-  'documents',
-  'partners',
-  'drivers',
-  'vehicles ',
-  'orders',
-  'invoices',
-  'receipts',
-  'other',
-];
+const folders: string[] = ['logo', 'users', 'other'];
 
 // Créer une instance de B2 avec les informations d'authentification
 export const createB2Instance = () => {

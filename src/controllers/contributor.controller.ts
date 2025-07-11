@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import { config } from '../config';
+import { IPermissionConstant } from '../constants/permission';
+import PERMISSIONSOWNER from '../constants/permission-owner';
 import { IUser, User } from '../models/user.model';
 import { ContributorService } from '../services/contributor.service';
 import { EmailService } from '../services/email.service';
+import PermissionService from '../services/permission.service';
 import { getContributorOwnerWelcomeTemplate } from '../templates/emails/contrib-owner-welcome.template';
 import { generatePassword } from '../utils/password.utils';
 import {
@@ -48,16 +51,28 @@ export class ContributorController {
       user.password = generatedPassword;
       await user.save();
 
+      // 2. Création automatique des permissions pour le membre
+      await Promise.all(
+        PERMISSIONSOWNER.map((permission: IPermissionConstant) =>
+          PermissionService.createPermissionsForUser(
+            permission.menu,
+            permission.label,
+            permission.actions,
+            user._id as string
+          )
+        )
+      );
+
       const confirmationUrl = `${config.frontendUrl}/account-validation?token=${user.emailVerificationToken}`;
 
       EmailService.sendEmail({
-        to: newContributor.email,
+        to: user.email as string,
         subject: 'Bienvenue sur Contrib - Votre compte a été créé',
         html: getContributorOwnerWelcomeTemplate({
           firstName: newContributor.name,
           name: newContributor.name,
           password: generatedPassword,
-          loginUrl: config.email.adminLoginUrl,
+          loginUrl: config.email.partnerLoginUrl,
           confirmationUrl,
         }).html,
       });

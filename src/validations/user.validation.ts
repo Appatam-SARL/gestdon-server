@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const userValidation = {
   register: z.object({
     body: z.object({
-      email: z.string().email('Email invalide'),
+      email: z.string(),
       phone: z
         .string()
         .regex(/^(?:\+|00)?[1-9]\d{1,14}$/)
@@ -128,7 +128,7 @@ export const userValidation = {
 
   disableMFA: z.object({
     body: z.object({
-      token: z.string().length(6, 'Le code MFA doit contenir 6 caractères'),
+      mfaToken: z.string().length(6, 'Le code MFA doit contenir 6 caractères'),
     }),
   }),
 

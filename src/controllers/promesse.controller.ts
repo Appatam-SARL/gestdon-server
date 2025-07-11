@@ -1,13 +1,41 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { z } from 'zod';
+import { INotification } from '../models/notification.model';
 import { PromesseZodSchema } from '../models/promesse.model';
+import { User } from '../models/user.model';
+import { NotificationService } from '../services/notification.service';
 import PromesseService from '../services/promesse.service';
+// import { NotificationService } from '../services/notification.service';
+
+const notificationService = new NotificationService();
 
 class PromesseController {
   static async createPromesse(req: Request, res: Response): Promise<void> {
     try {
+      const userId = req.user.id;
       const promesseData = PromesseZodSchema.parse(req.body);
       const newPromesse = await PromesseService.createPromesse(promesseData);
+      const users = await User.find({ contributorId: req.body.contributorId });
+      await Promise.all(
+        users.map(async (user) => {
+          const notificationData = {
+            userId: userId,
+            userType: 'User',
+            title: 'Nouvelle activité de promesse',
+            body: 'Une nouvelle activité de promesse a été enregistrée.',
+            type: 'SYSTEM',
+            channel: 'PUSH',
+            status: 'PENDING',
+            read: false,
+            contributorId: req.body.contributorId,
+            reviewedBy: user._id as mongoose.Types.ObjectId,
+          };
+          await notificationService.sendNotification(
+            notificationData as INotification
+          );
+        })
+      );
       res.status(201).json(newPromesse);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -61,7 +89,7 @@ class PromesseController {
       res.status(200).json({
         success: true,
         data: promesses,
-        pagination,
+        metadata: pagination,
         message: 'Promesses récupérées avec succès',
       });
     } catch (error) {

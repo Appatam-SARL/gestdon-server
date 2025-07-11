@@ -1,6 +1,7 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { createServer } from 'http';
 import mongoose from 'mongoose';
 import morgan from 'morgan';
@@ -8,12 +9,18 @@ import swaggerUi from 'swagger-ui-express';
 import { redisClient } from './config/redis';
 import swaggerSpec from './config/swagger';
 import activityTypeRoutes from './routes/activity-type.routes';
+import activityRoutes from './routes/activity.routes';
 import { adminRoutes } from './routes/admin.routes';
+import audienceRoutes from './routes/audience.routes';
+
+import agendaroutes from './routes/agenda.routes';
 import beneficiaryType from './routes/beneficiaire-type.routes';
 import beneficiaireRoutes from './routes/beneficiaire.routes';
 import { chatRoutes } from './routes/chat.routes';
+import contactRoutes from './routes/contact.routes';
 import { contributorRoutes } from './routes/contributor.routes';
 import customFieldRoutes from './routes/custom-field.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 import { documentRoutes } from './routes/document.routes';
 import donRoutes from './routes/don.routes';
 import { fileRoutes } from './routes/file.routes';
@@ -21,6 +28,7 @@ import { logRoutes } from './routes/log.routes';
 import notificationRoutes from './routes/notification.routes';
 import permissionRoutes from './routes/permission.routes';
 import promesseRoutes from './routes/promesse.routes';
+import reportRoutes from './routes/report.routes';
 import { userRoutes } from './routes/user.routes';
 import { EmailService } from './services/email.service';
 import { NotificationService } from './services/notification.service';
@@ -35,16 +43,44 @@ const VERSION = 'v1/api';
 export const app = express();
 const server = createServer(app);
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      process.env.FRONTEND_URL as string,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://192.168.3.29:5173',
+      'http://172.26.128.1:5173',
+      'http://172.23.64.1:5173',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(morgan('dev'));
+
+app.use(express.static('public'));
 
 // Documentation API
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
+// app.use(limiter);
 // Routes
 app.use(`/${VERSION}/admins`, adminRoutes);
+app.use(`/${VERSION}/agendas`, agendaroutes);
+app.use(`/${VERSION}/activities`, activityRoutes);
+app.use(`/${VERSION}/audiences`, audienceRoutes);
 app.use(`/${VERSION}/users`, userRoutes);
 app.use(`/${VERSION}/logs`, logRoutes);
 app.use(`/${VERSION}/files`, fileRoutes);
@@ -59,6 +95,9 @@ app.use(`/${VERSION}/promesses`, promesseRoutes);
 app.use(`/${VERSION}/activity-types`, activityTypeRoutes);
 app.use(`/${VERSION}/beneficiaire-types`, beneficiaryType);
 app.use(`/${VERSION}/custom-fields`, customFieldRoutes);
+app.use(`/${VERSION}/reports`, reportRoutes);
+app.use(`/${VERSION}/dashboard`, dashboardRoutes);
+app.use(`/${VERSION}/contacts`, contactRoutes);
 
 // Initialiser Socket.io via le service uniquement
 SocketService.initialize(server);

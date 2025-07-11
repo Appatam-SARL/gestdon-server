@@ -3,6 +3,7 @@ import { getBaseEmailTemplate } from './base.template';
 interface IUserWelcomeTemplate {
   firstName: string;
   verificationUrl?: string;
+  password?: string;
 }
 
 export function getUserWelcomeTemplate(data: IUserWelcomeTemplate): {
@@ -13,6 +14,11 @@ export function getUserWelcomeTemplate(data: IUserWelcomeTemplate): {
   const verificationSection = data.verificationUrl
     ? `
     <div style="margin: 30px 0;">
+      <p>Votre compte administrateur a été créé avec succès. Voici vos identifiants de connexion :</p>
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Mot de passe temporaire :</strong> ${data?.password}</p>
+      </div>        
+      <p><strong>Important :</strong> Pour des raisons de sécurité, vous devrez changer ce mot de passe lors de votre première connexion.</p>
       <p><strong>Veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</strong></p>
       <div style="text-align: center; margin: 20px 0;">
         <a href="${data.verificationUrl}" class="button">
@@ -32,13 +38,9 @@ export function getUserWelcomeTemplate(data: IUserWelcomeTemplate): {
   // Contenu spécifique à l'email de bienvenue
   const content = `
     <h2 style="color: #2c3e50; text-align: center;">Bienvenue sur Contrib !</h2>
-    
     <p>Bonjour ${data.firstName},</p>
-    
     <p>Votre compte a été créé avec succès. Vous pouvez maintenant profiter de tous les services de Contrib.</p>
-    
     ${verificationSection}
-    
     <div class="success-box">
       <h3>Prochaines étapes :</h3>
       <ul>
@@ -46,7 +48,6 @@ export function getUserWelcomeTemplate(data: IUserWelcomeTemplate): {
         <li>Consulter vos activités</li>
       </ul>
     </div>
-    
     <p>Nous vous remercions pour votre confiance et vous souhaitons une excellente expérience sur notre plateforme.</p>
   `;
 
