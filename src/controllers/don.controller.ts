@@ -88,7 +88,11 @@ class DonController {
         end: req.body.endDate,
         ownerId: req.body.contributorId,
       };
-      const newDon = await DonService.createDon(payloadDon);
+      const newDon = await DonService.createDon(
+        payloadDon,
+        req.body.startDate as Date,
+        req.body.endDate as Date
+      );
       const newDonAgenda = await AgendaService.create(payloadAgenda);
       const users = await User.find({ contributorId: req.body.contributorId });
       await Promise.all(

@@ -18,10 +18,6 @@ export function getReceivedDonTemplate(data: ITemplateDonReceived): {
 } {
   // log qrCodeDataURL
   console.log('qrCodeDataURL' + data.qrCodeDataURL);
-  const qrCodeImgTag = data.qrCodeDataURL?.startsWith('data:image')
-    ? `<img src="${data.qrCodeDataURL}" alt="QR Code" style="display:block; margin:auto; max-width:200px;" />`
-    : '<p>QR Code non disponible</p>';
-
   const verificationSection = data.confirmationUrl
     ? `
       <div style="margin: 30px 0;">
@@ -46,18 +42,13 @@ export function getReceivedDonTemplate(data: ITemplateDonReceived): {
         </div>
 
         <div class="qr-section" style="text-align: center; margin: 30px 0;">
-            <img src="${
-              data.qrCodeDataURL
-            }" alt="QR Code de confirmation" class="qr-code" style="border: 2px solid #ddd; border-radius: 10px; max-width: 300px; height: auto;">
+            <img src="cid:qrcode" alt="QR Code" class="qr-code" style="border: 2px solid #ddd; border-radius: 10px; max-width: 300px; height: auto;">
             <p><strong>Scannez ce QR code pour confirmer</strong></p>
-            <p style="font-size: 12px; color: #666;">
-                Lien direct: <a href="${data.confirmationUrl}>Cliquez ici</a>
-            </p>
         </div>
 
         <div class="instructions" style="background: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <p><strong>Alternative:</strong> Si vous ne pouvez pas scanner le QR code, cliquez sur ce lien :</p>
-            <p><a href='${data.confirmationUrl}'>Confirmer la réception</a></p>
+            <a href='${data.confirmationUrl}'>Confirmer la réception</a>
         </div>
       
       </div>

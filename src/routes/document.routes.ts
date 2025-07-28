@@ -96,6 +96,8 @@ router.post(
   DocumentController.uploadDocument
 );
 
+router.post('/create-many', DocumentController.createManyDocuments);
+
 /**
  * @swagger
  * /api/v1/documents/{ownerType}/{ownerId}:

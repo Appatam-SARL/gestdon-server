@@ -1,17 +1,62 @@
 import { z } from 'zod';
+import { Beneficiaire } from '../models/beneficiaire.model';
 import Promesse, {
   IPromesse,
   PromesseZodSchema,
 } from '../models/promesse.model';
+import { User } from '../models/user.model';
+import { generateICalendarEvent } from '../utils/icalendar';
+import { EmailService } from './email.service';
 
 class PromesseService {
   static async createPromesse(
-    promesseData: z.infer<typeof PromesseZodSchema>
+    promesseData: z.infer<typeof PromesseZodSchema>,
+    startEvent?: Date,
+    endEvent?: Date
   ): Promise<IPromesse> {
     // Validate input data using Zod
     PromesseZodSchema.parse(promesseData);
     const promesse = new Promesse(promesseData);
-    return promesse.save();
+    await promesse.save();
+
+    //found beneficiary
+    const beneficiary = await Beneficiaire.findById(
+      promesse.beneficiaireId
+    ).exec();
+    if (!beneficiary) throw new Error('Bénéficiaire introuvable');
+    // found manager
+    const manager = await User.findOne({
+      role: 'MANAGER',
+      contributorId: promesse.contributorId,
+    }).exec();
+    if (!manager) throw new Error('Manager introuvable');
+
+    // Génération du contenu iCalendar (invitation .ics) personnalisé
+    const now = promesse.createdAt ? new Date(promesse.createdAt) : new Date();
+    const defaultStart = now;
+    const defaultEnd = new Date(now.getTime() + 30 * 60000);
+    const dtStart = startEvent ? startEvent : defaultStart;
+    const dtEnd = endEvent ? endEvent : defaultEnd;
+
+    // envoie email
+    await EmailService.sendEmail({
+      // to: foundBeneficiary.email || 'default@email.com',
+      to: manager.email || 'default@email.com',
+      subject: 'Nouvelle activité de promesse',
+      html: 'Nouvelle activité de promesse',
+      icalEvent: {
+        filename: 'invitation.ics',
+        method: 'REQUEST',
+        content: generateICalendarEvent({
+          title: 'Enregistrer la promesse dans votre agenda',
+          description: `Vous avez faire une promesse à ${beneficiary.fullName} `,
+          start: dtStart,
+          end: dtEnd,
+        }).replace(/\\n/g, '\r\n'),
+      },
+    });
+
+    return promesse;
   }
 
   static async getAllPromesses(page: string, limit: string, filters: any) {

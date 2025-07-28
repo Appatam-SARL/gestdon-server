@@ -50,17 +50,28 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://172.19.176.1:5173',
+  'http://172.23.64.1:5173',
+  'http://192.168.3.24:5173',
+  'https://gestdon-contrib-workspace.vercel.app',
+];
+
 // Middleware
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL as string,
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://192.168.3.29:5173',
-      'http://172.26.128.1:5173',
-      'http://172.23.64.1:5173',
-    ],
+    origin: (origin, callback) => {
+      // Autorise les requêtes sans origin (ex: Postman) ou si l'origine est dans la liste
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else if (process.env.NODE_ENV === 'dev') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -179,6 +190,52 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
+// const startServer = async () => {
+//   try {
+//     // Vérifier la connexion email
+//     await verifyEmailConnection();
+
+//     // Connexion à MongoDB
+//     const mongoUri = process.env.MONGO_URI || 'mongodb://mongo:27017/gescomdb';
+//     mongoose
+//       .connect(mongoUri)
+//       .then(() => {
+//         logger.database('Connected to MongoDB');
+
+//         // Démarrer le serveur
+//         const PORT = process.env.PORT || 5000;
+//         server.listen(PORT, () => {
+//           logger.system(`Serveur démarré sur le port ${PORT}`);
+
+//           // Vérification de la connexion à Redis
+//           redisClient
+//             .ping()
+//             .then(() => {
+//               logger.redis('Connexion à Redis établie');
+//             })
+//             .catch((error) => {
+//               logger.error('Erreur de connexion Redis:', error);
+//             });
+
+//           // Vérification de la configuration SMTP
+//           EmailService.verifyConnection().then((isValid) => {
+//             if (isValid) {
+//               logger.email('Configuration SMTP vérifiée avec succès');
+//             } else {
+//               logger.error('Erreur de configuration SMTP');
+//             }
+//           });
+//         });
+//       })
+//       .catch((error) => {
+//         logger.error('Error connecting to MongoDB:', error);
+//       });
+//   } catch (error) {
+//     logger.error('Erreur au démarrage du serveur:', error);
+//     process.exit(1);
+//   }
+// };
 
 startServer();
 

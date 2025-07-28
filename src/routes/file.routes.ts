@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import {
   deleteFileBackblaze,
   downloadFileBackblaze,
+  getMultipleFilesMetadata,
   MulterRequestFields,
   uploadBackblaze,
   uploadMulter,
@@ -98,6 +99,7 @@ const deleteHandler = (
  *         description: Erreur serveur
  */
 router.post(`/upload/:folder`, uploadMulter, uploadHandler);
+router.post('/metadata', getMultipleFilesMetadata);
 
 /**
  * @swagger

@@ -52,6 +52,23 @@ export class DocumentController {
     }
   }
 
+  // create many documents
+  static async createManyDocuments(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const createdDocuments = await Document.insertMany(req.body);
+      res.status(201).json({
+        status: 'success',
+        data: { documents: createdDocuments },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // Obtenir tous les documents d'un propriétaire (conducteur ou véhicule)
   static async getOwnerDocuments(
     req: Request,

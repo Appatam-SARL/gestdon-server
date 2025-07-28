@@ -1,13 +1,22 @@
 import nodemailer from 'nodemailer';
+import type { Attachment } from 'nodemailer/lib/mailer';
 import { config } from '../config';
 import { ExternalServiceError } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { QueueService } from './queue.service';
 
+interface IIcalEvent {
+  filename: string;
+  method: string;
+  content: string;
+}
+
 interface IEmailOptions {
   to: string;
   subject: string;
   html: string;
+  attachments?: Attachment[];
+  icalEvent?: IIcalEvent;
 }
 
 export class EmailService {
@@ -37,6 +46,8 @@ export class EmailService {
         to: options.to,
         subject: options.subject,
         html: options.html,
+        attachments: options.attachments, // Ajout de la prise en compte des pièces jointes
+        icalEvent: options.icalEvent, // Ajout de la prise en compte de l'invitation iCalendar
       });
       logger.email(`Email envoyé avec succès à ${options.to}`);
     } catch (error) {

@@ -6,6 +6,7 @@ import { Beneficiaire } from '../models/beneficiaire.model';
 import Contributor from '../models/contributor.model';
 import Don, { IDon } from '../models/don.model';
 import { getReceivedDonTemplate } from '../templates/emails/received-don.template';
+import { generateICalendarEvent } from '../utils/icalendar';
 import { EmailService } from './email.service';
 
 class DonService {
@@ -14,7 +15,13 @@ class DonService {
    * @param donData - The data for the new donation.
    * @returns The created donation.
    */
-  public static async createDon(donData: Partial<IDon>): Promise<IDon> {
+  public static async createDon(
+    donData: Partial<IDon>,
+    startEvent?: Date,
+    endEvent?: Date
+  ): Promise<IDon> {
+    console.log('🚀 ~ DonService ~ endEvent:', endEvent);
+    console.log('🚀 ~ DonService ~ startEvent:', startEvent);
     if (!donData.beneficiaire || !donData.contributorId || !donData.montant) {
       throw new Error(
         'Les champs beneficiaire, contributorId et montant sont obligatoires'
@@ -45,89 +52,70 @@ class DonService {
         "L'URL du frontend n'est pas configurée pour cet environnement"
       );
 
-    const defaultQROptions = {
-      type: 'png',
-      quality: 0.92,
-      margin: 1,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF',
-      },
-      width: 256,
-    };
-
     const confirmationUrl = `${frontendUrl}/confirm-don?token=${token}`;
 
-    const qrCodeDataURL = await QRCode.toDataURL(confirmationUrl, {
-      width: 256,
-      margin: 1,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF',
-      },
-      errorCorrectionLevel: 'M',
-      type: 'image/png',
-    });
+    // Générer le QR code
+    const qrCodeImage = await this.generateQRCode(confirmationUrl);
+    const base64Data = qrCodeImage.replace(/^data:image\/png;base64,/, '');
+    console.log('🚀 ~ DonService ~ createDon ~ base64Data:', base64Data);
 
-    don.qrCode = qrCodeDataURL;
+    don.qrCode = base64Data;
 
     await don.save();
 
     const emailTemplate = getReceivedDonTemplate({
       don,
-      qrCodeDataURL: don.qrCode,
+      qrCodeDataURL: base64Data,
       beneficiaire: foundBeneficiary,
       contributor: foundContributor,
       confirmationUrl,
     });
 
+    // Génération du contenu iCalendar (invitation .ics) personnalisé
+    const now = don.createdAt ? new Date(don.createdAt) : new Date();
+
+    const defaultStart = now;
+    const defaultEnd = new Date(now.getTime() + 30 * 60000);
+    const dtStart = startEvent ? startEvent : defaultStart;
+    const dtEnd = endEvent ? endEvent : defaultEnd;
+
     await EmailService.sendEmail({
       // to: foundBeneficiary.email || 'default@email.com',
-      to: 'konenonwa1998@gmail.com',
+      to: 'konn1708980003@outlook.fr',
       subject: emailTemplate.subject,
       html: emailTemplate.html,
+      attachments: [
+        {
+          filename: 'qrcode.png',
+          content: base64Data,
+          encoding: 'base64',
+          cid: 'qrcode', // Référence pour l'image inline
+        },
+      ],
+      icalEvent: {
+        filename: 'invitation.ics',
+        method: 'REQUEST',
+        content: generateICalendarEvent({
+          title: 'Confirmation de Don pour ' + foundBeneficiary.fullName,
+          description: `Merci ${foundContributor.name} pour votre don à ${foundBeneficiary.fullName}. Cliquez sur le lien pour confirmer`,
+          start: dtStart,
+          end: dtEnd,
+          url: confirmationUrl,
+        }).replace(/\\n/g, '\r\n'),
+      },
     });
 
     return don;
   }
 
-  private static async generateQRCode(
-    confirmationUrl: string
-  ): Promise<string> {
+  private static async generateQRCode(data: string): Promise<string> {
     try {
-      const qrCodeDataUrl = await QRCode.toDataURL(confirmationUrl, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF',
-        },
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        // quality: 0.92,
-      });
-
-      // Vérification que le QR code est bien généré
-      if (
-        !qrCodeDataUrl ||
-        !qrCodeDataUrl.startsWith('data:image/png;base64,')
-      ) {
-        throw new Error('QR Code généré invalide');
-      }
-
-      console.log('QR Code généré avec succès, taille:', qrCodeDataUrl.length);
-      return qrCodeDataUrl;
+      const qrCodeDataURL = await QRCode.toDataURL(data);
+      return qrCodeDataURL;
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Erreur génération QR Code:', error);
-        throw new Error(`Erreur génération QR Code: ${error.message}`);
-      } else {
-        console.error('Erreur génération QR Code:', error);
-        throw new Error(`Erreur génération QR Code: ${error}`);
-      }
+      throw new Error('Erreur lors de la génération du QR code');
     }
   }
-
   /**
    * Génère un token JWT pour la confirmation du don
    */

@@ -31,12 +31,6 @@ export const getEmailAssignRepresentativeTemplate = ({
               margin: 0 auto;
               padding: 20px;
             }
-            .header {
-              background-color: #FF6B6B;
-              color: white;
-              padding: 20px;
-              text-align: center;
-            }
             .content {
               padding: 20px;
               background-color: #ffffff;
@@ -44,7 +38,7 @@ export const getEmailAssignRepresentativeTemplate = ({
             .button {
               display: inline-block;
               padding: 12px 24px;
-              background-color: #FF6B6B;
+              background-color: #2ecc71;
               color: white;
               text-decoration: none;
               border-radius: 5px;

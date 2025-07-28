@@ -45,6 +45,8 @@ export interface IPromesse extends Document {
   beneficiaireId: mongoose.Types.ObjectId;
   contributorId: mongoose.Types.ObjectId;
   status: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Mongoose Schema
@@ -81,6 +83,14 @@ const PromesseSchema: Schema = new Schema<IPromesse>(
     contributorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Contributor',
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {

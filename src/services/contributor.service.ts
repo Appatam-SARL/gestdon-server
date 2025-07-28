@@ -4,6 +4,7 @@ import {
   IContributor,
 } from '../models/contributor.model';
 import { ApiError } from '../utils/api-error';
+import { AppError } from '../utils/AppError';
 
 export class ContributorService {
   /**
@@ -11,23 +12,20 @@ export class ContributorService {
    * The partner ID is taken from the authenticated partner member (owner).
    */
   static async createContributor(
-    data: Omit<IContributor, 'partner' | 'status'>
-    // partnerId: string
+    data: Omit<IContributor, 'status'>
   ): Promise<IContributor> {
     const existingContributor = await Contributor.findOne({
       email: data.email,
-      // partner: partnerId,
     });
     if (existingContributor) {
-      throw new ApiError(
-        400,
-        'Contributor with this email already exists for this partner'
+      throw new AppError(
+        'Cet email est déjà utilisé par un autre compte contributeur',
+        400
       );
     }
 
     const contributor = new Contributor({
       ...data,
-      // partner: partnerId,
       status: 'Pending', // Default status as per model
     });
 

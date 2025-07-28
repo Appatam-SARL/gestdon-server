@@ -1,0 +1,67 @@
+services:
+  app:
+    build: .
+    ports:
+      - '5000:5000'
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/gescomdb
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BUCKET_NAME=${BUCKET_NAME}
+      - BUCKET_ID=${BUCKET_ID}
+      - KEY_ID=${KEY_ID}
+      - APP_KEY=${APP_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - SMTP_SERVICE=${SMTP_SERVICE}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_SENDER_NAME=${SMTP_SENDER_NAME}
+      - SMTP_DEFAULT_FROM=${SMTP_DEFAULT_FROM}
+      - EXPO_ACCESS_TOKEN=${EXPO_ACCESS_TOKEN}
+      - URL_DEV=${URL_DEV}
+      - URL_PROD=${URL_PROD}
+      - ADMIN_URL_DEV=${ADMIN_URL_DEV}
+      - ADMIN_URL_PROD=${ADMIN_URL_PROD}
+      - ADMIN_FORGOT_PASSWORD_URL=${ADMIN_FORGOT_PASSWORD_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - PARTNER_URL_DEV=${PARTNER_URL_DEV}
+      - PARTNER_URL_PROD=${PARTNER_URL_PROD}
+      - MFA_ISSUER=${MFA_ISSUER}
+    # command: npm run dev
+    depends_on:
+      - mongo
+      - redis
+
+  mongo:
+    image: mongo:8
+    container_name: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=gescomdb
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: gescom-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo-data:
+  redis-data:

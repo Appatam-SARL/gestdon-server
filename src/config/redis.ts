@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 import Redis from 'ioredis';
-import { CacheError } from '../utils/errors/SystemError';
+import { CacheError } from '../utils/errors';
 import { logger } from '../utils/logger';
+// import { Redis } from '@upstash/redis';
 
 dotenv.config();
 
@@ -15,14 +16,25 @@ interface RedisConfig {
 
 // Configuration de Redis depuis les variables d'environnement
 const redisConfig: RedisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
+  host: process.env.REDIS_HOST || 'redis',
   port: parseInt(process.env.REDIS_PORT || '6379', 10),
   password: process.env.REDIS_PASSWORD || null,
   db: parseInt(process.env.REDIS_DB || '0', 10),
-  keyPrefix: process.env.REDIS_PREFIX || 'valdeli:',
+  keyPrefix: process.env.REDIS_PREFIX || 'contrib:',
 };
 
 // Création de l'instance Redis
+// const redisClient = new Redis({
+//   url: process.env.REDIS_URL!,
+//   token: process.env.REDIS_TOKEN!,
+// });
+
+// async function test() {
+//   await redisClient.set('foo', 'bar');
+// }
+// test().then(() => {
+//   console.log('Redis is working');
+// });
 const redisClient = new Redis({
   host: redisConfig.host,
   port: redisConfig.port,
@@ -49,5 +61,10 @@ redisClient.on('error', (err) => {
 redisClient.on('reconnecting', () => {
   logger.redis('Tentative de reconnexion à Redis...');
 });
+
+// redisClient.ping().then(() => {
+//   logger.redis('Connexion à Redis établie');
+// });
+// redisClient.
 
 export { redisClient, redisConfig };

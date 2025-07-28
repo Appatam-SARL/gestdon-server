@@ -70,78 +70,9 @@ export class SocketService {
     this.io.on('connection', (socket) => {
       logger.socket('Client connecté:', socket.id);
 
-      // Rejoindre une room spécifique pour une livraison
-      socket.on('join-delivery', (deliveryId: string) => {
-        socket.join(`delivery:${deliveryId}`);
-      });
-
-      // Quitter une room
-      socket.on('leave-delivery', (deliveryId: string) => {
-        socket.leave(`delivery:${deliveryId}`);
-      });
-
-      // Authentification du chauffeur
-      socket.on('driver-auth', (data: { driverId: string; token: string }) => {
-        // TODO: Vérifier le token (pour la sécurité)
-
-        // Enregistrer l'ID du socket pour ce chauffeur
-        this.driverSockets.set(data.driverId, socket.id);
-
-        // Rejoindre la room du chauffeur
-        socket.join(`driver:${data.driverId}`);
-
-        logger.socket(`Chauffeur authentifié: ${data.driverId}`);
-      });
-
-      // Mise à jour de la position du chauffeur
-      socket.on('driver-location', async (data: DriverLocation) => {
-        try {
-          // En mode développement, permettre les mises à jour sans authentification préalable
-          if (process.env.NODE_ENV === 'development') {
-            // Mettre à jour dans MongoDB
-
-            // Émettre la mise à jour aux clients qui suivent ce chauffeur
-            this.emitDriverLocation(data);
-
-            logger.socket(
-              `Position du chauffeur mise à jour (mode dev): ${data.driverId}`
-            );
-            return;
-          }
-
-          // Émettre la mise à jour aux clients qui suivent ce chauffeur
-          this.emitDriverLocation(data);
-
-          logger.socket(`Position du chauffeur mise à jour: ${data.driverId}`);
-        } catch (error) {
-          logger.error(
-            `Erreur lors de la mise à jour de la position du chauffeur: ${error}`
-          );
-        }
-      });
-
-      // Client demande à suivre un chauffeur
-      socket.on('track-driver', (driverId: string) => {
-        // Ajouter à la room de suivi du chauffeur
-        socket.join(`driver-tracking:${driverId}`);
-
-        // Enregistrer ce socket comme suivant ce chauffeur
-        if (!this.trackingSockets.has(driverId)) {
-          this.trackingSockets.set(driverId, new Set());
-        }
-        this.trackingSockets.get(driverId)?.add(socket.id);
-
-        logger.socket(`Client commence à suivre le chauffeur: ${driverId}`);
-      });
-
-      // Client arrête de suivre un chauffeur
-      socket.on('untrack-driver', (driverId: string) => {
-        socket.leave(`driver-tracking:${driverId}`);
-
-        // Supprimer ce socket de la liste des suiveurs
-        this.trackingSockets.get(driverId)?.delete(socket.id);
-
-        logger.socket(`Client arrête de suivre le chauffeur: ${driverId}`);
+      // envoie une notification à un utilisateur
+      socket.on('notification', (data: any) => {
+        this.emitNotification(data.userId, data);
       });
 
       // Gérer les messages du chat

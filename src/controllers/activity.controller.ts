@@ -9,6 +9,7 @@ import { AgendaService } from '../services/agenda.service';
 import { EmailService } from '../services/email.service';
 import { NotificationService } from '../services/notification.service';
 import { getEmailAssignRepresentativeTemplate } from '../templates/emails/representative-audience-or-activty.template';
+import { generateICalendarEvent } from '../utils/icalendar';
 import {
   createActivitySchema,
   updateActivitySchema,
@@ -38,6 +39,7 @@ export class ActivityController {
       };
       const activity = await ActivityService.createActivity(payloadActivity);
       const users = await User.find(query);
+
       await Promise.all(
         users.map(async (user) => {
           const notificationData = {
@@ -57,6 +59,7 @@ export class ActivityController {
           );
         })
       );
+
       res.status(201).json({
         data: activity,
         message: 'Activité créée avec succès',
@@ -199,6 +202,38 @@ export class ActivityController {
           );
         })
       );
+
+      // Recherche des utilisateurs à notifier (rôles :  MANAGER)
+      const managerNotify = await User.findOne({
+        contributorId: activity.contributorId,
+        role: 'MANAGER',
+      });
+
+      // Génération du contenu iCalendar (invitation .ics) personnalisé
+      const now = req.body.startDate
+        ? new Date(req.body.startDate)
+        : new Date();
+
+      const defaultStart = now;
+      const defaultEnd = new Date(req.body.endDate);
+      const dtStart = defaultStart;
+      const dtEnd = defaultEnd;
+
+      await EmailService.sendEmail({
+        to: managerNotify?.email as string,
+        subject: "Validation d'une activité",
+        html: "Vous venez de valider une activité en cours, vous serez notifié par email 1 jours avant la date de debut de l'activité.",
+        icalEvent: {
+          filename: 'invitation.ics',
+          method: 'REQUEST',
+          content: generateICalendarEvent({
+            title: 'Activité validée',
+            description: `Vous avez validé une activité en cours.`,
+            start: dtStart,
+            end: dtEnd,
+          }).replace(/\\n/g, '\r\n'),
+        },
+      });
 
       // Réponse succès
       res.status(200).json({

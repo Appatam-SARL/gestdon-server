@@ -15,7 +15,11 @@ class PromesseController {
     try {
       const userId = req.user.id;
       const promesseData = PromesseZodSchema.parse(req.body);
-      const newPromesse = await PromesseService.createPromesse(promesseData);
+      const newPromesse = await PromesseService.createPromesse(
+        promesseData,
+        req.body.startDate as Date,
+        req.body.endDate as Date
+      );
       const users = await User.find({ contributorId: req.body.contributorId });
       await Promise.all(
         users.map(async (user) => {

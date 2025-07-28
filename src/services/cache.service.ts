@@ -177,65 +177,6 @@ export class CacheService {
   }
 
   /**
-   * Ajoute des coordonnées géographiques à un ensemble
-   * @param key Clé de l'ensemble géospatial
-   * @param longitude Longitude
-   * @param latitude Latitude
-   * @param member Identifiant du membre
-   */
-  static async geoAdd(
-    key: string,
-    longitude: number,
-    latitude: number,
-    member: string
-  ): Promise<void> {
-    try {
-      await redisClient.geoadd(key, longitude, latitude, member);
-    } catch (error) {
-      console.error("Erreur lors de l'ajout géospatial:", error);
-      throw new CacheError(
-        `Erreur lors de l'ajout géospatial: ${(error as Error).message}`
-      );
-    }
-  }
-
-  /**
-   * Recherche les membres dans un rayon autour d'un point géographique
-   * @param key Clé de l'ensemble géospatial
-   * @param longitude Longitude du centre
-   * @param latitude Latitude du centre
-   * @param radius Rayon en mètres
-   * @returns Liste des membres trouvés
-   */
-  static async geoRadius(
-    key: string,
-    longitude: number,
-    latitude: number,
-    radius: number
-  ): Promise<string[]> {
-    try {
-      // Rechercher dans un rayon avec les résultats limités
-      const results = (await redisClient.georadius(
-        key,
-        longitude,
-        latitude,
-        radius,
-        'm',
-        'WITHDIST',
-        'ASC'
-      )) as GeoRadiusResult[];
-
-      // Extraire uniquement les identifiants des membres
-      return results.map((result) => result[0]);
-    } catch (error) {
-      console.error('Erreur lors de la recherche géospatiale:', error);
-      throw new CacheError(
-        `Erreur lors de la recherche géospatiale: ${(error as Error).message}`
-      );
-    }
-  }
-
-  /**
    * Vide le cache entièrement
    * ATTENTION: à utiliser uniquement en environnement de développement ou avec précaution
    */

@@ -37,7 +37,7 @@ export interface MulterRequestFields {
   file?: MulterFile;
 }
 
-const folders: string[] = ['logo', 'users', 'other'];
+const folders: string[] = ['logo', 'users', 'other', 'media'];
 
 // Créer une instance de B2 avec les informations d'authentification
 export const createB2Instance = () => {
@@ -245,5 +245,55 @@ export const downloadFileBackblaze = async (
     file.data.pipe(res);
   } catch (error) {
     handleError(error, res);
+  }
+};
+
+// Endpoint pour récupérer les métadonnées de plusieurs fichiers
+export const getMultipleFilesMetadata = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { fileIds } = req.body; // Array de fileIds
+
+    if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+      res.status(400).json({ error: 'FileIds requis' });
+    }
+
+    const b2 = getB2Instance();
+    await b2.authorize();
+
+    const filesMetadata = [];
+
+    for (const fileId of fileIds) {
+      try {
+        // Récupérer les informations du fichier
+        const fileInfo = await b2.getFileInfo({ fileId });
+
+        filesMetadata.push({
+          fileId: fileId,
+          fileName: fileInfo.data.fileName,
+          contentType: fileInfo.data.contentType,
+          fileSize: fileInfo.data.contentLength,
+          uploadTimestamp: fileInfo.data.uploadTimestamp,
+          // URL pour accéder au fichier via votre API
+          fileUrl: `http://localhost:5000/v1/api/files/${fileId}`,
+        });
+      } catch (error) {
+        console.error(`Erreur pour le fichier ${fileId}:`, error);
+        filesMetadata.push({
+          fileId: fileId,
+          error: 'Fichier non trouvé',
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      files: filesMetadata,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des métadonnées:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 };

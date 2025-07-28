@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { config } from '../config';
 import { IPermissionConstant } from '../constants/permission';
 import PERMISSIONSOWNER from '../constants/permission-owner';
@@ -18,7 +18,11 @@ export class ContributorController {
    * Create a new contributor.
    * Assumes the authenticated user is a PartnerMember with access to a partner ID.
    */
-  static async createContributor(req: Request, res: Response): Promise<void> {
+  static async createContributor(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       let user: IUser | null = null;
 
@@ -80,10 +84,20 @@ export class ContributorController {
       res.status(201).json({
         status: 'success',
         data: newContributor,
+        message: 'Compte contributeur créé avec succès',
       });
     } catch (error) {
-      // ApiError is already handled by global error middleware
-      throw error;
+      next(error);
+      // throw new AppError(
+      //   error &&
+      //   typeof error === 'object' &&
+      //   'message' in error &&
+      //   typeof (error as any).message === 'string'
+      //     ? (error as any).message
+      //     : 'Erreur lors de la création du compte contributeur',
+      //   500,
+      //   error
+      // );
     }
   }
 

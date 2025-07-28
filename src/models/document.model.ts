@@ -114,9 +114,15 @@ import { DocOwnerTypeEnum, DocStatusEnum, DocTypeEnum } from '../utils/enum';
  *           description: "Stack trace (uniquement en développement)"
  */
 
-export type tDocOwnerType = 'CONTRIBUTOR' | 'USER' | 'ADMIN';
+export type tDocOwnerType = 'Contributor' | 'User' | 'Admin' | 'Report';
 
-export type tDocType = 'LOGO' | 'CARD_CNI' | 'PASSPORT' | 'DFE' | 'RCCM' | 'CARD_CMU' | 'OTHER';
+export type tDocType =
+  | 'OTHER'
+  | 'ID_CARD'
+  | 'PASSPORT'
+  | 'RESIDENCE_PERMIT'
+  | 'NATIONAL_ID'
+  | 'CARD_CMU';
 
 export type tDocStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
 
@@ -124,7 +130,6 @@ export interface IDocument extends MongooseDocument {
   owner: mongoose.Types.ObjectId;
   ownerType: tDocOwnerType;
   type: tDocType;
-  number: string;
   verified: boolean;
   verifiedAt?: Date;
   verifiedBy?: mongoose.Types.ObjectId;
@@ -156,10 +161,6 @@ const documentSchema = new Schema<IDocument>(
     type: {
       type: String,
       enum: DocTypeEnum,
-      required: true,
-    },
-    number: {
-      type: String,
       required: true,
     },
     verified: {

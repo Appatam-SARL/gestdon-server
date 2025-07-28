@@ -9,6 +9,7 @@ import { AudienceService } from '../services/audience.service';
 import { EmailService } from '../services/email.service';
 import { NotificationService } from '../services/notification.service';
 import { getEmailAssignRepresentativeTemplate } from '../templates/emails/representative-audience-or-activty.template';
+import { generateICalendarEvent } from '../utils/icalendar';
 
 const notificationService = new NotificationService();
 
@@ -291,6 +292,38 @@ export class AudienceController {
         })
       );
 
+      // Recherche des utilisateurs à notifier (rôles :  MANAGER)
+      const managerNotify = await User.findOne({
+        contributorId: foundAudience.contributorId,
+        role: 'MANAGER',
+      });
+
+      // Génération du contenu iCalendar (invitation .ics) personnalisé
+      const now = req.body.startDate
+        ? new Date(req.body.startDate)
+        : new Date();
+
+      const defaultStart = now;
+      const defaultEnd = new Date(req.body.endDate);
+      const dtStart = defaultStart;
+      const dtEnd = defaultEnd;
+
+      await EmailService.sendEmail({
+        to: managerNotify?.email as string,
+        subject: "Validation d'une audience",
+        html: "Vous venez de valider une audience en cours, vous serez notifié par email 1 jours avant la date de debut de l'audience.",
+        icalEvent: {
+          filename: 'invitation.ics',
+          method: 'REQUEST',
+          content: generateICalendarEvent({
+            title: 'Activité validée',
+            description: `Vous avez validé une audience en cours.`,
+            start: dtStart,
+            end: dtEnd,
+          }).replace(/\\n/g, '\r\n'),
+        },
+      });
+
       res.status(200).json({
         success: true,
         message: 'Audience validée avec succès',
@@ -442,6 +475,16 @@ export class AudienceController {
         $or: [{ role: 'EDITOR' }, { role: 'AGENT' }],
       });
 
+      // Génération du contenu iCalendar (invitation .ics) personnalisé
+      const now = audience.createdAt
+        ? new Date(audience.createdAt)
+        : new Date();
+
+      const defaultStart = now;
+      const defaultEnd = new Date(now.getTime() + 30 * 60000);
+      const dtStart = defaultStart;
+      const dtEnd = defaultEnd;
+
       // Envoi des notifications
       await Promise.all(
         usersToNotify.map(async (user) => {
@@ -460,6 +503,21 @@ export class AudienceController {
           await notificationService.sendNotification(
             notificationData as INotification
           );
+          await EmailService.sendEmail({
+            to: user.email || 'default@email.com',
+            subject: 'Nouvelle activité de don',
+            html: 'Nouvelle activité de don',
+            icalEvent: {
+              filename: 'invitation.ics',
+              method: 'REQUEST',
+              content: generateICalendarEvent({
+                title: 'Demande de confirmation',
+                description: `Vous avez reçu une demande de confirmation de la nouvelle activité.`,
+                start: dtStart,
+                end: dtEnd,
+              }).replace(/\\n/g, '\r\n'),
+            },
+          });
         })
       );
       res.status(200).json(audience);
@@ -491,7 +549,7 @@ export class AudienceController {
         });
         return;
       }
-      console.log("")
+      console.log('');
 
       // Envoi des notifications
       const notificationData = {

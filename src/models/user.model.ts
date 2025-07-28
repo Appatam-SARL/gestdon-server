@@ -82,7 +82,10 @@ const userSchema = new Schema<IUser>(
   {
     email: {
       type: String,
-      unique: true,
+      unique: [
+        true,
+        "L'email est déjà utilisé par un autre membre de la plateforme",
+      ],
       sparse: true,
       lowercase: true,
       trim: true,
@@ -117,7 +120,10 @@ const userSchema = new Schema<IUser>(
         },
         message: 'Format de numéro de téléphone invalide',
       },
-      unique: true,
+      unique: [
+        true,
+        "Le numéro de téléphone est déjà utilisé par d'autre membre de la plateforme",
+      ],
       trim: true,
     },
     firstName: {

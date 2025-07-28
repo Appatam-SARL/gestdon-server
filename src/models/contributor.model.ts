@@ -30,7 +30,11 @@ export interface IContributor extends Document {
 const contributorSchema: Schema = new Schema({
   name: { type: String, required: true },
   description: { type: String },
-  email: { type: String, required: true, unique: true },
+  email: {
+    type: String,
+    required: true,
+    unique: [true, "Le mail est déjà utilisé par d'autre membre"],
+  },
   phoneNumber: { type: String },
   logo: {
     fileUrl: { type: String },
