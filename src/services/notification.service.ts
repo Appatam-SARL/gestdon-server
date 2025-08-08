@@ -348,16 +348,14 @@ export class NotificationService {
     limit: number = 20
   ): Promise<{ notifications: INotification[]; total: number }> {
     try {
-      const skip = (page - 1) * limit;
+      // const skip = (page - 1) * limit;
       // Filtrage selon le statut et le rôle
       const query: any = { userType, reviewedBy: userId };
 
       const [notifications, total] = await Promise.all([
-        Notification.find(query)
-          .populate('userId')
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit),
+        Notification.find(query).populate('userId').sort({ createdAt: -1 }),
+        // .skip(skip)
+        // .limit(limit),
         Notification.countDocuments(query),
       ]);
 

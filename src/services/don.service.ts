@@ -45,8 +45,7 @@ class DonService {
     );
     don.token = token;
 
-    const frontendUrl =
-      process.env[`ADMIN_URL_${process.env.NODE_ENV?.toUpperCase()}`];
+    const frontendUrl = process.env.FRONTEND_URL;
     if (!frontendUrl)
       throw new Error(
         "L'URL du frontend n'est pas configurée pour cet environnement"

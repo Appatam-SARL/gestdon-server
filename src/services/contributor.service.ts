@@ -1,4 +1,4 @@
-import { SortOrder } from 'mongoose';
+import mongoose, { SortOrder } from 'mongoose';
 import {
   default as Contributor,
   IContributor,
@@ -70,7 +70,7 @@ export class ContributorService {
     page: number;
     totalPages: number;
   }> {
-    const query: any = { partner: '' };
+    const query: any = {};
 
     if (filters.status) {
       query.status = filters.status;
@@ -173,5 +173,147 @@ export class ContributorService {
     }
 
     return contributor;
+  }
+
+  /**
+   * Post follow request to a contributor, ensuring it belongs to the specified partner.
+   */
+  static async followContributor(
+    followerId: mongoose.Types.ObjectId,
+    followedId: mongoose.Types.ObjectId
+  ): Promise<IContributor> {
+    const [contributorFollow, contributorFollowing] = await Promise.all([
+      Contributor.findById(followedId), // contributor to follow
+      Contributor.findById(followerId), // contributor following
+    ]);
+
+    if (!contributorFollow || !contributorFollowing) {
+      throw new ApiError(404, 'Compte contributeur introuvable');
+    }
+
+    if (contributorFollow.followers.includes(followerId)) {
+      throw new ApiError(400, 'Vous êtes déjà suivi');
+    }
+
+    if (contributorFollowing.following.includes(followedId)) {
+      throw new ApiError(400, 'Vous êtes déjà suivi');
+    }
+
+    contributorFollow.followers.push(followerId);
+    contributorFollowing.following.push(followedId);
+
+    await Promise.all([contributorFollow.save(), contributorFollowing.save()]);
+
+    return contributorFollowing;
+  }
+
+  /**
+   * Get the number of followers for a contributor.
+   */
+  static async getFollowersCount(
+    contributorId: string,
+    partnerId: string
+  ): Promise<number> {
+    const contributor = await Contributor.findById(contributorId);
+    if (!contributor) {
+      throw new ApiError(
+        404,
+        'Contributor not found or does not belong to this partner'
+      );
+    }
+
+    const followersCount = contributor.followers.length;
+    return followersCount;
+  }
+
+  /**
+   * Unfollow a contributor, ensuring it belongs to the specified partner.
+   */
+  static async unfollowContributor(
+    followerId: mongoose.Types.ObjectId,
+    followedId: mongoose.Types.ObjectId
+  ): Promise<unknown> {
+    const [contributorFollow, contributorFollowing] = await Promise.all([
+      Contributor.findByIdAndUpdate(followedId, {
+        $pull: { followers: followerId },
+      }), // contributor unfollowing
+      Contributor.findByIdAndUpdate(followerId, {
+        $pull: { following: followedId },
+      }), // contributor following
+    ]);
+    // on retourne le contributeur suivi
+    return contributorFollowing;
+  }
+
+  /**
+   * Get the followers of a contributor.
+   */
+  static async getFollowersContributor(
+    contributorId: string
+  ): Promise<IContributor['followers']> {
+    const contributor = await Contributor.findById(contributorId).populate({
+      path: 'followers',
+      select: 'name logo email',
+    });
+    if (!contributor) {
+      throw new ApiError(
+        404,
+        'Contributor not found or does not belong to this partner'
+      );
+    }
+    const followers = contributor.followers;
+    return followers;
+  }
+
+  /**
+   * Get the following of a contributor.
+   */
+  static async getFollowing(
+    contributorId: string
+  ): Promise<IContributor['following']> {
+    const contributor = await Contributor.findById(contributorId).populate({
+      path: 'following',
+      select: 'name logo email',
+    });
+    if (!contributor) {
+      throw new ApiError(
+        404,
+        'Contributor not found or does not belong to this partner'
+      );
+    }
+    const following = contributor.following;
+    return following;
+  }
+
+  /**
+   * Get the total number of followers for a contributor.
+   */
+  static async countTotalFollowers(contributorId: string): Promise<number> {
+    //find the contributor
+    const contributor = await Contributor.findById(contributorId);
+    if (!contributor) {
+      throw new ApiError(
+        404,
+        'Contributor not found or does not belong to this partner'
+      );
+    }
+    const followersCount = contributor.followers.length;
+    return followersCount;
+  }
+
+  /**
+   * Get the total number of following for a contributor.
+   */
+  static async countTotalFollowing(contributorId: string): Promise<number> {
+    //find the contributor
+    const contributor = await Contributor.findById(contributorId);
+    if (!contributor) {
+      throw new ApiError(
+        404,
+        'Contributor not found or does not belong to this partner'
+      );
+    }
+    const followingCount = contributor.following.length;
+    return followingCount;
   }
 }

@@ -7,6 +7,7 @@ router.post('/', ActivityTypeController.createActivityType);
 router.get('/', ActivityTypeController.getAllActivityTypes);
 router.get('/:id', ActivityTypeController.getActivityTypeById);
 router.put('/:id', ActivityTypeController.updateActivityType);
+router.put('/:id/toggle-menu', ActivityTypeController.toggleMenu);
 router.delete('/:id', ActivityTypeController.deleteActivityType);
 
 export default router;

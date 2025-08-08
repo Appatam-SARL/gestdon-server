@@ -1,4 +1,4 @@
-import { Document, model, Schema } from 'mongoose';
+import mongoose, { Document, model, Schema } from 'mongoose';
 
 // Define the enum for contributor status
 enum ContributorStatus {
@@ -24,6 +24,8 @@ export interface IContributor extends Document {
   address: IAddress;
   status: ContributorStatus;
   fieldOfActivity: string;
+  followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
 }
 
 // Define the Mongoose schema for Contributor
@@ -53,6 +55,8 @@ const contributorSchema: Schema = new Schema({
     uppercase: true,
     trim: true,
   },
+  followers: [{ type: Schema.Types.ObjectId, ref: 'Contributor' }],
+  following: [{ type: Schema.Types.ObjectId, ref: 'Contributor' }],
   status: {
     type: String,
     enum: Object.values(ContributorStatus),

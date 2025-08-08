@@ -8,15 +8,16 @@ import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import { redisClient } from './config/redis';
 import swaggerSpec from './config/swagger';
+
 import activityTypeRoutes from './routes/activity-type.routes';
 import activityRoutes from './routes/activity.routes';
 import { adminRoutes } from './routes/admin.routes';
-import audienceRoutes from './routes/audience.routes';
-
 import agendaroutes from './routes/agenda.routes';
+import audienceRoutes from './routes/audience.routes';
 import beneficiaryType from './routes/beneficiaire-type.routes';
 import beneficiaireRoutes from './routes/beneficiaire.routes';
 import { chatRoutes } from './routes/chat.routes';
+import commentRoutes from './routes/comment.route';
 import contactRoutes from './routes/contact.routes';
 import { contributorRoutes } from './routes/contributor.routes';
 import customFieldRoutes from './routes/custom-field.routes';
@@ -25,11 +26,14 @@ import { documentRoutes } from './routes/document.routes';
 import donRoutes from './routes/don.routes';
 import { fileRoutes } from './routes/file.routes';
 import { logRoutes } from './routes/log.routes';
+import menuRoutes from './routes/menu.routes';
 import notificationRoutes from './routes/notification.routes';
 import permissionRoutes from './routes/permission.routes';
+import postRoute from './routes/post.routes';
 import promesseRoutes from './routes/promesse.routes';
 import reportRoutes from './routes/report.routes';
 import { userRoutes } from './routes/user.routes';
+
 import { EmailService } from './services/email.service';
 import { NotificationService } from './services/notification.service';
 import { PaymentService } from './services/payment.service';
@@ -109,7 +113,9 @@ app.use(`/${VERSION}/custom-fields`, customFieldRoutes);
 app.use(`/${VERSION}/reports`, reportRoutes);
 app.use(`/${VERSION}/dashboard`, dashboardRoutes);
 app.use(`/${VERSION}/contacts`, contactRoutes);
-
+app.use(`/${VERSION}/comments`, commentRoutes);
+app.use(`/${VERSION}/posts`, postRoute);
+app.use(`/${VERSION}/menus`, menuRoutes);
 // Initialiser Socket.io via le service uniquement
 SocketService.initialize(server);
 

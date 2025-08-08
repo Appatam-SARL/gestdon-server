@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { config } from '../config';
 import { IPermissionConstant } from '../constants/permission';
 import PERMISSIONSOWNER from '../constants/permission-owner';
+import FollowRequest from '../models/followRequest.model';
 import { IUser, User } from '../models/user.model';
 import { ContributorService } from '../services/contributor.service';
 import { EmailService } from '../services/email.service';
@@ -242,6 +244,302 @@ export class ContributorController {
         status: 'success',
         data: deletedContributor, // Or just a success message
         message: 'Contributor deleted successfully',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // followers
+  static async followContributor(req: Request, res: Response): Promise<void> {
+    try {
+      const { followerId, followedId } = req.body; // Validated ObjectId
+
+      if (!followerId || !followedId) {
+        res.status(400).json({
+          message: 'Contributor ID and contributorFollowId are required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      if (
+        (followerId && !mongoose.Types.ObjectId.isValid(followerId)) ||
+        (followedId && !mongoose.Types.ObjectId.isValid(followedId))
+      ) {
+        res.status(400).json({
+          message: 'Les deux identifiants ne sont pas valide',
+          success: false,
+          data: null,
+        });
+      }
+
+      if (followerId === followedId) {
+        res.status(400).json({
+          message: 'Vous ne pouvez pas vous suivre vous-même',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      const followed = await ContributorService.followContributor(
+        followerId,
+        followedId
+      );
+
+      res.status(200).json({
+        success: true,
+        data: followed,
+        message: 'Contributor followed successfully',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+  static async followContributorByFollowRequest(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { followerId, followedId } = req.body;
+
+      if (!followerId || !followedId) {
+        res.status(400).json({
+          message: 'Contributor ID and contributorFollowId are required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      if (
+        (followerId && !mongoose.Types.ObjectId.isValid(followerId)) ||
+        (followedId && !mongoose.Types.ObjectId.isValid(followedId))
+      ) {
+        res.status(400).json({
+          message: 'Les deux identifiants ne sont pas valide',
+          success: false,
+          data: null,
+        });
+      }
+
+      if (followerId === followedId) {
+        res.status(400).json({
+          message: 'Vous ne pouvez pas vous suivre vous-même',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      const followRequest = new FollowRequest({
+        requester: followerId,
+        recipient: followedId,
+      });
+      await followRequest.save();
+
+      res.status(200).json({
+        message: 'Demande de suivi envoyé',
+        success: true,
+        data: followRequest,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  static async getFollowersCount(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params; // Validated ObjectId
+      const partnerId = req.partner._id; // Assuming partnerId is available
+
+      const followersCount = await ContributorService.getFollowersCount(
+        id,
+        partnerId
+      );
+
+      res.status(200).json({
+        status: 'success',
+        data: followersCount,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async unfollowContributor(req: Request, res: Response): Promise<void> {
+    try {
+      const { followerId, followedId } = req.body;
+
+      if (!followerId || !followedId) {
+        res.status(400).json({
+          message: 'Contributor ID and contributorFollowId are required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      if (
+        (followerId && !mongoose.Types.ObjectId.isValid(followerId)) ||
+        (followedId && !mongoose.Types.ObjectId.isValid(followedId))
+      ) {
+        res.status(400).json({
+          message: 'Les deux identifiants ne sont pas valide',
+          success: false,
+          data: null,
+        });
+      }
+
+      if (followerId === followedId) {
+        res.status(400).json({
+          message: 'Vous ne pouvez pas vous suivre vous-même',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+
+      const unfollowed = await ContributorService.unfollowContributor(
+        followerId,
+        followedId
+      );
+
+      res.status(200).json({
+        status: 'success',
+        data: unfollowed,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Obtenir la liste des compte suivis par un contributeur
+  static async getFollowing(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params; // Validated ObjectId
+
+      if (!id) {
+        res.status(400).json({
+          message: 'ID is required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+      if (id && !mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: 'Invalid ID',
+          success: false,
+          data: null,
+        });
+      }
+
+      const following = await ContributorService.getFollowing(id);
+
+      res.status(200).json({
+        status: 'success',
+        data: following,
+        message: 'Liste des abonnées',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Obtenir la liste des abonnées d'un contributeur
+  static async getFollowersContributor(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { id } = req.params; // Validated ObjectId
+      if (!id) {
+        res.status(400).json({
+          message: 'ID is required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+      if (id && !mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: 'Invalid ID',
+          success: false,
+          data: null,
+        });
+      }
+      const followers = await ContributorService.getFollowersContributor(id);
+      res.status(200).json({
+        status: 'success',
+        data: followers,
+        message: 'Liste des compte que je suit',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Nombre de compte abonnée à un contributeur
+  static async countTotalFollowers(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({
+          message: 'ID is required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+      if (id && !mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: 'Invalid ID',
+          success: false,
+          data: null,
+        });
+      }
+      const followersCount = await ContributorService.countTotalFollowers(id);
+      res.status(200).json({
+        status: 'success',
+        data: followersCount,
+        message: 'Nombre de compte abonnée',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //Nombre de compte suivi par un contributeur
+  static async countTotalFollowing(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          message: 'ID is required',
+          success: false,
+          data: null,
+        });
+        return;
+      }
+      if (id && !mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({
+          message: 'Invalid ID',
+          success: false,
+          data: null,
+        });
+      }
+
+      const followingCount = await ContributorService.countTotalFollowing(id);
+
+      res.status(200).json({
+        status: 'success',
+        data: followingCount,
+        message: 'Nombre de compte suivis',
       });
     } catch (error) {
       throw error;

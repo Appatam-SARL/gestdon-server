@@ -23,18 +23,6 @@ const redisConfig: RedisConfig = {
   keyPrefix: process.env.REDIS_PREFIX || 'contrib:',
 };
 
-// Création de l'instance Redis
-// const redisClient = new Redis({
-//   url: process.env.REDIS_URL!,
-//   token: process.env.REDIS_TOKEN!,
-// });
-
-// async function test() {
-//   await redisClient.set('foo', 'bar');
-// }
-// test().then(() => {
-//   console.log('Redis is working');
-// });
 const redisClient = new Redis({
   host: redisConfig.host,
   port: redisConfig.port,
@@ -61,10 +49,5 @@ redisClient.on('error', (err) => {
 redisClient.on('reconnecting', () => {
   logger.redis('Tentative de reconnexion à Redis...');
 });
-
-// redisClient.ping().then(() => {
-//   logger.redis('Connexion à Redis établie');
-// });
-// redisClient.
 
 export { redisClient, redisConfig };

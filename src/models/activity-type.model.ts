@@ -2,6 +2,7 @@ import mongoose, { Document, Schema, model, models } from 'mongoose';
 
 export interface IActivityType extends Document {
   label: string;
+  addToMenu: boolean;
   contributorId: mongoose.Types.ObjectId;
 }
 
@@ -11,6 +12,11 @@ const activityTypeSchema = new Schema<IActivityType>(
       type: String,
       required: true,
       maxlength: 50,
+    },
+    addToMenu: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     contributorId: {
       type: mongoose.Schema.Types.ObjectId,
