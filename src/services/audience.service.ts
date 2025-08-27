@@ -1,6 +1,19 @@
 import { IAudience } from '../interfaces/audience.interface';
 import { Audience } from '../models/audience.model';
 
+interface IAudienceService {
+  data: IAudience[];
+  totalData: number;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
 export class AudienceService {
   static async create(data: Partial<IAudience>): Promise<IAudience> {
     const audience = new Audience(data);
@@ -16,17 +29,7 @@ export class AudienceService {
     contributorId?: string;
     period?: { from: string; to: string };
     status: string;
-  }): Promise<{
-    data: IAudience[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-      totalPages: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
-  }> {
+  }): Promise<IAudienceService> {
     const {
       page = 1,
       limit = 10,
@@ -80,7 +83,7 @@ export class AudienceService {
     }
 
     // Exécuter la requête avec pagination
-    const [data, total] = await Promise.all([
+    const [data, total, totalData] = await Promise.all([
       Audience.find(filter)
         .populate('beneficiaryId')
         .populate('contributorId')
@@ -88,6 +91,7 @@ export class AudienceService {
         .skip(skip)
         .limit(limit),
       Audience.countDocuments(filter),
+      Audience.countDocuments({ contributorId }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -96,6 +100,7 @@ export class AudienceService {
 
     return {
       data,
+      totalData,
       pagination: {
         total,
         page,

@@ -1,0 +1,677 @@
+openapi: 3.0.0
+info:
+  title: API Fans - ValDeli Backend
+  description: API pour la gestion des fans (utilisateurs mobiles)
+  version: 1.0.0
+  contact:
+    name: ValDeli Team
+    email: support@valdeli.com
+
+servers:
+  - url: http://localhost:3000/v1/api
+    description: Serveur de développement
+  - url: https://api.valdeli.com/v1/api
+    description: Serveur de production
+
+paths:
+  /fans/register:
+    post:
+      tags:
+        - Fans
+      summary: Inscription d'un nouveau fan
+      description: Crée un nouveau compte fan avec username, email et mot de passe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+                  pattern: '^[a-zA-Z0-9_]+$'
+                  description: Nom d'utilisateur unique
+                  example: 'john_doe'
+                email:
+                  type: string
+                  format: email
+                  description: Adresse email unique
+                  example: 'john@example.com'
+                password:
+                  type: string
+                  minLength: 6
+                  description: Mot de passe (minimum 6 caractères)
+                  example: 'password123'
+                phoneNumber:
+                  type: string
+                  pattern: '^\+?[1-9]\d{1,14}$'
+                  description: Numéro de téléphone optionnel
+                  example: '+1234567890'
+      responses:
+        '201':
+          description: Fan créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Fan créé avec succès'
+                  data:
+                    $ref: '#/components/schemas/FanResponse'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflit - Email, username ou téléphone déjà utilisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/login:
+    post:
+      tags:
+        - Fans
+      summary: Connexion d'un fan
+      description: Authentification par email ou numéro de téléphone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email ou numéro de téléphone
+                  example: 'john@example.com'
+                password:
+                  type: string
+                  description: Mot de passe
+                  example: 'password123'
+      responses:
+        '200':
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Connexion réussie'
+                  data:
+                    type: object
+                    properties:
+                      fan:
+                        $ref: '#/components/schemas/FanResponse'
+                      token:
+                        type: string
+                        description: Token JWT d'authentification
+                        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        '400':
+          description: Données manquantes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Identifiants invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Compte désactivé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/profile:
+    get:
+      tags:
+        - Fans
+      summary: Obtenir son propre profil
+      description: Récupère le profil complet du fan connecté
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profil récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/FanProfile'
+        '401':
+          description: Non autorisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Fans
+      summary: Mettre à jour son profil
+      description: Met à jour les informations du profil du fan connecté
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Profil mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Profil mis à jour avec succès'
+                  data:
+                    $ref: '#/components/schemas/FanResponse'
+        '400':
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/profile/{username}:
+    get:
+      tags:
+        - Fans
+      summary: Obtenir le profil public d'un fan
+      description: Récupère le profil public d'un fan par son username
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 30
+            pattern: '^[a-zA-Z0-9_]+$'
+          description: Nom d'utilisateur du fan
+          example: 'john_doe'
+      responses:
+        '200':
+          description: Profil public récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/FanPublicProfile'
+        '400':
+          description: Username invalide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Profil privé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/password:
+    put:
+      tags:
+        - Fans
+      summary: Mettre à jour le mot de passe
+      description: Change le mot de passe du fan connecté
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: Mot de passe actuel
+                  example: 'password123'
+                newPassword:
+                  type: string
+                  minLength: 6
+                  description: Nouveau mot de passe
+                  example: 'newpassword123'
+      responses:
+        '200':
+          description: Mot de passe mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Mot de passe mis à jour avec succès'
+        '400':
+          description: Données invalides ou mot de passe actuel incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/follow/{targetFanId}:
+    post:
+      tags:
+        - Fans
+      summary: Suivre un fan
+      description: Commence à suivre un autre fan
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: targetFanId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+          description: ID du fan à suivre
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Fan suivi avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Fan suivi avec succès'
+        '400':
+          description: Tentative de se suivre soi-même
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Non autorisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan cible non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Déjà en train de suivre ce fan
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Fans
+      summary: Ne plus suivre un fan
+      description: Arrête de suivre un fan
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: targetFanId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{24}$'
+          description: ID du fan à ne plus suivre
+          example: '507f1f77bcf86cd799439011'
+      responses:
+        '200':
+          description: Fan ne plus suivi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Fan ne plus suivi'
+        '401':
+          description: Non autorisé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Fan cible non trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /fans/search:
+    get:
+      tags:
+        - Fans
+      summary: Rechercher des fans
+      description: Recherche des fans par username ou nom
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Terme de recherche
+          example: 'john'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Nombre maximum de résultats
+          example: 10
+      responses:
+        '200':
+          description: Recherche effectuée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FanSearchResult'
+        '400':
+          description: Paramètre de recherche manquant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    FanResponse:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        username:
+          type: string
+          example: 'john_doe'
+        email:
+          type: string
+          example: 'john@example.com'
+        phoneNumber:
+          type: string
+          example: '+1234567890'
+        profile:
+          $ref: '#/components/schemas/Profile'
+        isPrivate:
+          type: boolean
+          example: false
+        isVerified:
+          type: boolean
+          example: false
+        isActive:
+          type: boolean
+          example: true
+        isProfileComplete:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Profile:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: 'John'
+        lastName:
+          type: string
+          example: 'Doe'
+        bio:
+          type: string
+          example: 'Passionné de musique et de technologie'
+        avatar:
+          type: string
+          example: 'https://example.com/avatar.jpg'
+        coverPhoto:
+          type: string
+          example: 'https://example.com/cover.jpg'
+        website:
+          type: string
+          example: 'https://johndoe.com'
+
+    ProfileUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'John'
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'Doe'
+        bio:
+          type: string
+          maxLength: 500
+          example: 'Passionné de musique et de technologie'
+        avatar:
+          type: string
+          format: uri
+          example: 'https://example.com/avatar.jpg'
+        coverPhoto:
+          type: string
+          format: uri
+          example: 'https://example.com/cover.jpg'
+        website:
+          type: string
+          format: uri
+          example: 'https://johndoe.com'
+
+    FanProfile:
+      allOf:
+        - $ref: '#/components/schemas/FanResponse'
+        - type: object
+          properties:
+            followers:
+              type: array
+              items:
+                $ref: '#/components/schemas/FanSummary'
+            following:
+              type: array
+              items:
+                $ref: '#/components/schemas/FanSummary'
+
+    FanPublicProfile:
+      type: object
+      properties:
+        username:
+          type: string
+          example: 'john_doe'
+        profile:
+          $ref: '#/components/schemas/Profile'
+        isPrivate:
+          type: boolean
+          example: false
+        isVerified:
+          type: boolean
+          example: false
+        followers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FanSummary'
+        following:
+          type: array
+          items:
+            $ref: '#/components/schemas/FanSummary'
+
+    FanSummary:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        username:
+          type: string
+          example: 'jane_smith'
+        profile:
+          type: object
+          properties:
+            firstName:
+              type: string
+              example: 'Jane'
+            lastName:
+              type: string
+              example: 'Smith'
+            avatar:
+              type: string
+              example: 'https://example.com/avatar.jpg'
+
+    FanSearchResult:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: '507f1f77bcf86cd799439011'
+        username:
+          type: string
+          example: 'john_doe'
+        profile:
+          type: object
+          properties:
+            firstName:
+              type: string
+              example: 'John'
+            lastName:
+              type: string
+              example: 'Doe'
+            avatar:
+              type: string
+              example: 'https://example.com/avatar.jpg'
+        isPrivate:
+          type: boolean
+          example: false
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Message d'erreur détaillé"

@@ -1,0 +1,28 @@
+### Vérifier le statut de l'abonnement de l'utilisateur connecté
+# Cette route nécessite une authentification avec un token JWT valide
+GET {{baseUrl}}/api/subscriptions/check-status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###
+
+### Test sans authentification (doit retourner 401)
+GET {{baseUrl}}/api/subscriptions/check-status
+Content-Type: application/json
+
+###
+
+### Test avec un token invalide (doit retourner 401)
+GET {{baseUrl}}/api/subscriptions/check-status
+Authorization: Bearer invalid_token_here
+Content-Type: application/json
+
+###
+
+# Variables d'environnement pour les tests
+# Assurez-vous d'avoir un token JWT valide dans votre fichier http-client.env.json
+# Exemple de structure pour http-client.env.json :
+# {
+#   "baseUrl": "http://localhost:3000",
+#   "authToken": "votre_jwt_token_ici"
+# }

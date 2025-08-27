@@ -2,7 +2,7 @@ import mongoose, { Date, Document, Schema } from 'mongoose';
 
 interface IComment extends Document {
   post: Schema.Types.ObjectId;
-  author: Schema.Types.ObjectId;
+  author: Schema.Types.Mixed;
   authorType: 'Contributor' | 'Fan';
   content: String;
   likes: [
@@ -26,8 +26,8 @@ const commentSchema = new Schema<IComment>(
       required: [true, 'Le commentaire doit être associé à un post'],
     },
     author: {
-      type: Schema.Types.ObjectId,
-      ref: 'Contributor',
+      type: Schema.Types.Mixed,
+      refPath: 'authorType',
       required: [true, "L'auteur du commentaire est requis"],
     },
     authorType: {

@@ -1,0 +1,120 @@
+### Variables d'environnement
+@baseUrl = http://localhost:3000/v1/api
+@fanToken = {{login.response.body.data.token}}
+
+### Inscription d'un nouveau fan
+# @name register
+POST {{baseUrl}}/fans/register
+Content-Type: application/json
+
+{
+  "username": "testfan",
+  "email": "testfan@example.com",
+  "password": "password123",
+  "phoneNumber": "+1234567890"
+}
+
+### Connexion d'un fan avec email
+# @name login
+POST {{baseUrl}}/fans/login
+Content-Type: application/json
+
+{
+  "identifier": "testfan@example.com",
+  "password": "password123"
+}
+
+### Connexion d'un fan avec numéro de téléphone
+POST {{baseUrl}}/fans/login
+Content-Type: application/json
+
+{
+  "identifier": "+1234567890",
+  "password": "password123"
+}
+
+### Obtenir son propre profil
+GET {{baseUrl}}/fans/profile
+Authorization: Bearer {{fanToken}}
+
+### Mettre à jour le profil
+PUT {{baseUrl}}/fans/profile
+Authorization: Bearer {{fanToken}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "bio": "Passionné de musique et de technologie",
+  "avatar": "https://example.com/avatar.jpg",
+  "coverPhoto": "https://example.com/cover.jpg",
+  "website": "https://johndoe.com"
+}
+
+### Mettre à jour le mot de passe
+PUT {{baseUrl}}/fans/password
+Authorization: Bearer {{fanToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "password123",
+  "newPassword": "newpassword123"
+}
+
+### Obtenir le profil public d'un fan
+GET {{baseUrl}}/fans/profile/testfan
+
+### Rechercher des fans
+GET {{baseUrl}}/fans/search?q=john&limit=10
+
+### Suivre un fan
+POST {{baseUrl}}/fans/follow/{{targetFanId}}
+Authorization: Bearer {{fanToken}}
+
+### Ne plus suivre un fan
+DELETE {{baseUrl}}/fans/follow/{{targetFanId}}
+Authorization: Bearer {{fanToken}}
+
+### Tests d'erreur
+
+### Inscription avec email invalide
+POST {{baseUrl}}/fans/register
+Content-Type: application/json
+
+{
+  "username": "testfan2",
+  "email": "invalid-email",
+  "password": "password123"
+}
+
+### Inscription avec mot de passe trop court
+POST {{baseUrl}}/fans/register
+Content-Type: application/json
+
+{
+  "username": "testfan3",
+  "email": "testfan3@example.com",
+  "password": "123"
+}
+
+### Connexion avec identifiants invalides
+POST {{baseUrl}}/fans/login
+Content-Type: application/json
+
+{
+  "identifier": "nonexistent@example.com",
+  "password": "wrongpassword"
+}
+
+### Accès au profil sans token
+GET {{baseUrl}}/fans/profile
+
+### Mise à jour du profil avec données invalides
+PUT {{baseUrl}}/fans/profile
+Authorization: Bearer {{fanToken}}
+Content-Type: application/json
+
+{
+  "firstName": "",
+  "bio": "A".repeat(600)
+}

@@ -84,16 +84,18 @@ class PromesseController {
         ];
       }
 
-      const [promesses, pagination] = await PromesseService.getAllPromesses(
-        page as string,
-        limit as string,
-        filter
-      );
+      const [promesses, pagination, totalData] =
+        await PromesseService.getAllPromesses(
+          page as string,
+          limit as string,
+          filter
+        );
 
       res.status(200).json({
         success: true,
         data: promesses,
         metadata: pagination,
+        totalData,
         message: 'Promesses récupérées avec succès',
       });
     } catch (error) {

@@ -253,7 +253,7 @@ export class ContributorService {
   ): Promise<IContributor['followers']> {
     const contributor = await Contributor.findById(contributorId).populate({
       path: 'followers',
-      select: 'name logo email',
+      select: 'name logo email fieldOfActivity',
     });
     if (!contributor) {
       throw new ApiError(
@@ -273,7 +273,7 @@ export class ContributorService {
   ): Promise<IContributor['following']> {
     const contributor = await Contributor.findById(contributorId).populate({
       path: 'following',
-      select: 'name logo email',
+      select: 'name logo email fieldOfActivity',
     });
     if (!contributor) {
       throw new ApiError(

@@ -1,9 +1,10 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-interface IUser extends Document {
+interface IFan extends Document {
   username: string;
   email: string;
   password: string;
+  phoneNumber?: string;
   profile: {
     firstName: string;
     lastName: string;
@@ -17,9 +18,15 @@ interface IUser extends Document {
   isPrivate: boolean;
   isVerified: boolean;
   isActive: boolean;
+  isProfileComplete: boolean;
+  checkProfileComplete(): boolean;
 }
 
-const userSchema = new Schema(
+interface IFanModel extends mongoose.Model<IFan> {
+  updateProfileCompletionStatus(fanId: string): Promise<boolean>;
+}
+
+const fanSchema = new Schema(
   {
     username: {
       type: String,
@@ -41,14 +48,22 @@ const userSchema = new Schema(
       required: true,
       minlength: 6,
     },
+    phoneNumber: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     profile: {
       firstName: {
         type: String,
         trim: true,
+        default: '',
       },
       lastName: {
         type: String,
         trim: true,
+        default: '',
       },
       bio: {
         type: String,
@@ -71,13 +86,13 @@ const userSchema = new Schema(
     followers: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Fan',
       },
     ],
     following: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Fan',
       },
     ],
     isPrivate: {
@@ -92,12 +107,53 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Fan = mongoose.model<IUser>('Fan', userSchema);
+// Index pour la recherche par email ou téléphone
+fanSchema.index({ email: 1, phoneNumber: 1 });
+
+// Méthode pour vérifier si le profil est complet
+fanSchema.methods.checkProfileComplete = function (): boolean {
+  const profile = this.profile;
+  // Le profil est considéré comme complet si firstName, lastName et avatar sont renseignés
+  return !!(profile.firstName && profile.lastName && profile.avatar);
+};
+
+// Méthode statique pour vérifier et mettre à jour le statut du profil
+fanSchema.statics.updateProfileCompletionStatus = async function (
+  fanId: string
+): Promise<boolean> {
+  const fan = await this.findById(fanId);
+  if (!fan) {
+    throw new Error('Fan non trouvé');
+  }
+
+  const isComplete = fan.checkProfileComplete();
+
+  // Mettre à jour le statut seulement si il a changé
+  if (fan.isProfileComplete !== isComplete) {
+    fan.isProfileComplete = isComplete;
+    await fan.save();
+  }
+
+  return isComplete;
+};
+
+// Middleware pre-save pour mettre à jour isProfileComplete
+fanSchema.pre('save', function (next) {
+  (this as any).isProfileComplete = (this as any).checkProfileComplete();
+  next();
+});
+
+const Fan = mongoose.model<IFan, IFanModel>('Fan', fanSchema);
 
 export default Fan;
+export type { IFan };

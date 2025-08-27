@@ -2,14 +2,17 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { Admin } from '../models/admin.model';
 import { BlacklistedToken } from '../models/blacklisted-token.model';
+// import { Fan } from '../models/fan.model';
+import Fan from '../models/fan.model';
 import { User } from '../models/user.model';
 import { AppError } from '../utils/AppError';
 
 interface JwtPayload {
   id: string;
   email?: string;
-  type?: string; // 'admin', 'user', 'driver', 'partner'
+  type?: string; // 'admin', 'user', 'driver', 'partner', 'fan'
   role?: string; // Pour stocker le rôle de l'admin
+  fanId?: string; // Pour les fans
 }
 
 declare global {
@@ -19,7 +22,8 @@ declare global {
       user?: any;
       driver?: any;
       partner?: any;
-      userType?: 'admin' | 'user';
+      fan?: any;
+      userType?: 'admin' | 'user' | 'fan';
       userRole?: 'SUPER_ADMIN' | 'admin' | string; // Pour les rôles admin
     }
   }
@@ -85,6 +89,18 @@ export const authMiddleware = async (
         req.admin = admin;
         req.userType = 'admin';
         req.userRole = decoded.role || admin.role;
+      } else if (decoded.type === 'fan' || decoded.fanId) {
+        // Gestion des fans
+        const fanId = decoded.fanId || decoded.id;
+        const fan = await Fan.findById(fanId);
+        if (!fan || !fan.isActive) {
+          console.log('❌ Erreur: Fan non trouvé ou inactif:', fanId);
+          res.status(401).json({ message: 'Session invalide' });
+          return;
+        }
+        req.fan = fan;
+        // req.user = fan; // Compatibilité avec l'interface existante
+        req.userType = 'fan';
       } else {
         // Par défaut, on considère que c'est un utilisateur client
         const user = await User.findById(decoded.id);

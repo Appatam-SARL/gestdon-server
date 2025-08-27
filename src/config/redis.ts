@@ -23,18 +23,22 @@ const redisConfig: RedisConfig = {
   keyPrefix: process.env.REDIS_PREFIX || 'contrib:',
 };
 
-const redisClient = new Redis({
-  host: redisConfig.host,
-  port: redisConfig.port,
-  password: redisConfig.password || undefined,
-  db: redisConfig.db,
-  keyPrefix: redisConfig.keyPrefix,
-  retryStrategy: (times) => {
-    // Stratégie de reconnexion: expiration exponentielle avec un max de 30 secondes
-    const delay = Math.min(times * 1000, 30000);
-    return delay;
-  },
-});
+const redisClient = new Redis(
+  'redis://default:Ee0kMo1GzvB5wrbLhZ9xeVVtZEuhDHIY@redis-16318.c241.us-east-1-4.ec2.redns.redis-cloud.com:16318'
+);
+
+// const redisClient = new Redis({
+//   host: redisConfig.host,
+//   port: redisConfig.port,
+//   password: redisConfig.password || undefined,
+//   db: redisConfig.db,
+//   keyPrefix: redisConfig.keyPrefix,
+//   retryStrategy: (times) => {
+//     // Stratégie de reconnexion: expiration exponentielle avec un max de 30 secondes
+//     const delay = Math.min(times * 1000, 30000);
+//     return delay;
+//   },
+// });
 
 // Gestion des événements
 redisClient.on('connect', () => {
