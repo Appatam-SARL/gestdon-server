@@ -139,7 +139,6 @@ class DonController {
         sortBy = 'createdAt',
         sortOrder = 'desc',
       } = req.query;
-      console.log(req.query);
 
       // Construction du filtre
       const filter: any = {};
@@ -195,13 +194,14 @@ class DonController {
       };
 
       // Exécution de la requête
-      const [dons, total] = await Promise.all([
+      const [dons, total, totalData] = await Promise.all([
         Don.find(filter)
           .populate('beneficiaire')
           .sort(sort)
           .skip(skip)
           .limit(Number(limit)),
         Don.countDocuments(filter),
+        Don.countDocuments({ contributorId }),
       ]);
 
       // Calcul des métadonnées de pagination
@@ -213,6 +213,7 @@ class DonController {
         success: true,
         data: dons,
         message: 'Success',
+        totalData,
         metadata: {
           total,
           page: Number(page),

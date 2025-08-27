@@ -8,28 +8,37 @@ import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import { redisClient } from './config/redis';
 import swaggerSpec from './config/swagger';
+
 import activityTypeRoutes from './routes/activity-type.routes';
 import activityRoutes from './routes/activity.routes';
 import { adminRoutes } from './routes/admin.routes';
-import audienceRoutes from './routes/audience.routes';
-
 import agendaroutes from './routes/agenda.routes';
+import audienceRoutes from './routes/audience.routes';
 import beneficiaryType from './routes/beneficiaire-type.routes';
 import beneficiaireRoutes from './routes/beneficiaire.routes';
 import { chatRoutes } from './routes/chat.routes';
+import commentRoutes from './routes/comment.route';
 import contactRoutes from './routes/contact.routes';
 import { contributorRoutes } from './routes/contributor.routes';
 import customFieldRoutes from './routes/custom-field.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import { documentRoutes } from './routes/document.routes';
 import donRoutes from './routes/don.routes';
+import fanRoutes from './routes/fan.routes';
 import { fileRoutes } from './routes/file.routes';
+import invoiceRoutes from './routes/invoice.routes';
 import { logRoutes } from './routes/log.routes';
+import menuRoutes from './routes/menu.routes';
 import notificationRoutes from './routes/notification.routes';
+import packageRoutes from './routes/package.routes';
 import permissionRoutes from './routes/permission.routes';
+import postRoute from './routes/post.routes';
 import promesseRoutes from './routes/promesse.routes';
 import reportRoutes from './routes/report.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 import { userRoutes } from './routes/user.routes';
+
+import { CronManagerService } from './services/cron-manager.service';
 import { EmailService } from './services/email.service';
 import { NotificationService } from './services/notification.service';
 import { PaymentService } from './services/payment.service';
@@ -53,10 +62,10 @@ const limiter = rateLimit({
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'http://172.19.176.1:5173',
-  'http://172.23.64.1:5173',
-  'http://192.168.3.24:5173',
   'https://gestdon-contrib-workspace.vercel.app',
+  'http://10.0.2.2:19006', // Expo Go (Android Emulator)
+  'http://10.0.2.2:5000', // si tu appelles directement API
+  'http://127.0.0.1:19006', // Expo Go (iOS Simulator)
 ];
 
 // Middleware
@@ -93,6 +102,7 @@ app.use(`/${VERSION}/agendas`, agendaroutes);
 app.use(`/${VERSION}/activities`, activityRoutes);
 app.use(`/${VERSION}/audiences`, audienceRoutes);
 app.use(`/${VERSION}/users`, userRoutes);
+app.use(`/${VERSION}/fans`, fanRoutes);
 app.use(`/${VERSION}/logs`, logRoutes);
 app.use(`/${VERSION}/files`, fileRoutes);
 app.use(`/${VERSION}/documents`, documentRoutes);
@@ -109,7 +119,12 @@ app.use(`/${VERSION}/custom-fields`, customFieldRoutes);
 app.use(`/${VERSION}/reports`, reportRoutes);
 app.use(`/${VERSION}/dashboard`, dashboardRoutes);
 app.use(`/${VERSION}/contacts`, contactRoutes);
-
+app.use(`/${VERSION}/comments`, commentRoutes);
+app.use(`/${VERSION}/posts`, postRoute);
+app.use(`/${VERSION}/menus`, menuRoutes);
+app.use(`/${VERSION}/packages`, packageRoutes);
+app.use(`/${VERSION}/subscriptions`, subscriptionRoutes);
+app.use(`/${VERSION}/invoices`, invoiceRoutes);
 // Initialiser Socket.io via le service uniquement
 SocketService.initialize(server);
 
@@ -179,6 +194,9 @@ const startServer = async () => {
                 logger.error('Erreur de configuration SMTP');
               }
             });
+
+            // Démarrer les tâches automatiques de gestion des abonnements
+            CronManagerService.startAllCronJobs();
           });
         })
         .catch((error) => {
@@ -262,6 +280,9 @@ app.use(
 // Ajoutons une gestion propre de la fermeture
 const gracefulShutdown = () => {
   logger.system("🔴 Signal d'arrêt reçu. Fermeture du serveur...");
+
+  // Arrêter les tâches automatiques
+  CronManagerService.stopAllCronJobs();
 
   // Récupérer l'instance de Socket.io depuis le service
   const socketIo = SocketService.getInstance();

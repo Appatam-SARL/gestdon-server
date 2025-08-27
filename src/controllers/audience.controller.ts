@@ -74,6 +74,7 @@ export class AudienceController {
     res.status(200).json({
       success: true,
       data: result.data,
+      totalData: result.totalData,
       metadata: result.pagination,
     });
   };

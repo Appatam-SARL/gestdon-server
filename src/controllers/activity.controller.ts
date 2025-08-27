@@ -100,6 +100,7 @@ export class ActivityController {
       res.status(200).json({
         success: true,
         data: result.data,
+        totalData: result.totalData,
         metadata: result.pagination,
         message: 'Activities fetched successfully',
       });

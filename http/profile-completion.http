@@ -1,0 +1,36 @@
+### Vérifier le statut de complétion du profil
+GET {{baseUrl}}/api/fans/profile/completion
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+### Mettre à jour le profil (firstName)
+PATCH {{baseUrl}}/api/fans/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "firstName": "John"
+}
+
+### Mettre à jour le profil (lastName)
+PATCH {{baseUrl}}/api/fans/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "lastName": "Doe"
+}
+
+### Mettre à jour le profil (avatar)
+PATCH {{baseUrl}}/api/fans/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "avatar": "https://example.com/avatar.jpg"
+}
+
+### Vérifier le statut final
+GET {{baseUrl}}/api/fans/profile/completion
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

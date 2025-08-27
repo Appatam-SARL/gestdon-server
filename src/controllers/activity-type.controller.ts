@@ -109,4 +109,21 @@ export class ActivityTypeController {
       res.status(500).json({ message: 'Error deleting activity type', error });
     }
   }
+
+  static async toggleMenu(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const activityType = await ActivityTypeService.toggleMenu(id);
+      if (!activityType) {
+        res.status(404).json({ message: 'Activity type not found' });
+        return;
+      }
+      res.status(200).json({
+        data: activityType,
+        message: "Le type d'activité a été mis à jour avec succès",
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating activity type', error });
+    }
+  }
 }

@@ -67,7 +67,7 @@ class PromesseService {
       createdAt: 'desc',
     };
 
-    const [promesses, total] = await Promise.all([
+    const [promesses, total, totalData] = await Promise.all([
       Promesse.find(filters)
         .populate('beneficiaireId')
         .limit(Number(limit))
@@ -75,6 +75,7 @@ class PromesseService {
         .sort({ createdAt: -1 })
         .exec(),
       Promesse.countDocuments(filters).exec(),
+      Promesse.countDocuments({ contributorId: filters.contributorId }).exec(),
     ]);
 
     // Calcul des métadonnées de pagination
@@ -89,7 +90,7 @@ class PromesseService {
       hasPrevPage,
       limit: Number(limit),
     };
-    return [promesses, pagination];
+    return [promesses, pagination, totalData];
   }
 
   static async getPromesseById(id: string): Promise<IPromesse | null> {

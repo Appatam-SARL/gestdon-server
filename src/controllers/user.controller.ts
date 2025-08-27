@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import jwt, { TokenExpiredError } from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import { config } from '../config';
 import PERMISSIONS from '../constants/permission';
 import { BlacklistedToken } from '../models/blacklisted-token.model';
@@ -217,7 +218,7 @@ export class UserController {
       // Calcul de la pagination
       const skip = (Number(page) - 1) * Number(limit);
 
-      const [users, total] = await Promise.all([
+      const [users, total, totalData] = await Promise.all([
         User.find(filter)
           .select('-password -mfaEnabled -notificationPreferences -pushTokens')
           .skip(skip)
@@ -225,6 +226,7 @@ export class UserController {
           .sort({ createdAt: -1 })
           .populate('contributorId'),
         User.countDocuments(filter),
+        User.countDocuments({ contributorId }),
       ]);
 
       // Calcul des métadonnées de pagination
@@ -235,6 +237,7 @@ export class UserController {
       res.status(200).json({
         status: 'success',
         data: users,
+        totalData,
         metadata: {
           total,
           page: Number(page),
@@ -578,7 +581,9 @@ export class UserController {
             ? [{ phone: { $regex: new RegExp(`.*${normalizedLogin}$`) } }]
             : []),
         ],
-      }).select('+password +mfaSecret +mfaEnabled');
+      })
+        .select('+password +mfaSecret +mfaEnabled')
+        .populate('contributorId');
 
       if (!user) {
         await LogService.createLog(
@@ -607,6 +612,40 @@ export class UserController {
           req
         );
         return next(new AppError('Identifiant ou mot de passe incorrect', 401));
+      }
+
+      // Vérifier la souscription du contributeur
+      if (user.contributorId) {
+        const contributor = user.contributorId as any;
+        const hasActiveSubscription =
+          await UserController.checkContributorSubscription(contributor._id);
+
+        if (!hasActiveSubscription) {
+          // Récupérer les informations du contributeur et les packages disponibles
+          const contributorDetails = await UserController.getContributorDetails(
+            contributor._id
+          );
+          const availablePackages = await UserController.getAvailablePackages();
+
+          res.json({
+            status: 'error',
+            code: 'SUBSCRIPTION_REQUIRED',
+            isSubscribed: false,
+            contributor: {
+              id: contributor._id,
+              name: contributor.name,
+              email: contributor.email,
+              status: contributor.status,
+            },
+            message:
+              "Votre compte contributeur n'a pas de souscription active. Veuillez souscrire à un package pour continuer.",
+            availablePackages: availablePackages,
+            subscriptionUrl: '/pricing', // URL pour souscrire
+            helpMessage:
+              "Contactez votre administrateur pour souscrire à un package ou utilisez l'essai gratuit disponible.",
+          });
+          return;
+        }
       }
 
       if (user.mfaEnabled) {
@@ -1284,8 +1323,9 @@ export class UserController {
           return res.status(200).send({
             success: false,
             user: null,
-            pdv: null,
-            store: null,
+            contributor: null,
+            subscription: null,
+            package: null,
             message,
           });
         }
@@ -1293,12 +1333,37 @@ export class UserController {
         await user.save();
         const contributor = user.contributorId;
 
-        return res.status(200).send({ success: true, user, contributor });
+        // Récupérer la souscription active du contributeur
+        let activeSubscription = null;
+        let packageData = null;
+
+        if (contributor) {
+          const Subscription = mongoose.model('Subscription');
+          activeSubscription = await Subscription.findOne({
+            contributorId: (contributor as any)._id,
+            status: 'active',
+            endDate: { $gte: new Date() },
+          }).populate('packageId');
+
+          if (activeSubscription && activeSubscription.packageId) {
+            packageData = activeSubscription.packageId;
+          }
+        }
+
+        return res.status(200).send({
+          success: true,
+          user,
+          contributor,
+          subscription: activeSubscription,
+          package: packageData,
+        });
       }
       return res.status(200).send({
         success: false,
         user: null,
         contributor: null,
+        subscription: null,
+        package: null,
       });
     } catch (error) {
       if (error instanceof TokenExpiredError) {
@@ -1306,6 +1371,8 @@ export class UserController {
           success: false,
           user: userFound,
           contributor: null,
+          subscription: null,
+          package: null,
           message: 'Votre session a expiré. Veuillez-vous reconnecter.',
         });
       } else handleError(error, res);
@@ -1517,6 +1584,83 @@ export class UserController {
       });
     } catch (error) {
       res.status(400).json({ message: (error as Error).message });
+    }
+  }
+
+  // Nouvelle méthode privée pour vérifier la souscription
+  static async checkContributorSubscription(
+    contributorId: string
+  ): Promise<boolean> {
+    try {
+      const SubscriptionModel = (await import('../models/subscription.model'))
+        .default;
+
+      const activeSubscription = await SubscriptionModel.findOne({
+        contributorId,
+        status: 'active',
+        endDate: { $gt: new Date() },
+        $or: [{ paymentStatus: 'paid' }, { isFreeTrial: true }],
+      });
+
+      return !!activeSubscription;
+    } catch (error) {
+      console.error(
+        'Erreur lors de la vérification de la souscription:',
+        error
+      );
+      return false;
+    }
+  }
+
+  // Nouvelle méthode pour récupérer la souscription
+  static async getContributorSubscription(contributorId: string) {
+    try {
+      const SubscriptionModel = (await import('../models/subscription.model'))
+        .default;
+
+      return await SubscriptionModel.findOne({
+        contributorId,
+        status: 'active',
+        endDate: { $gt: new Date() },
+        $or: [{ paymentStatus: 'paid' }, { isFreeTrial: true }],
+      }).populate('packageId');
+    } catch (error) {
+      console.error(
+        'Erreur lors de la récupération de la souscription:',
+        error
+      );
+      return null;
+    }
+  }
+
+  // Méthode pour récupérer les détails du contributeur
+  static async getContributorDetails(contributorId: string) {
+    try {
+      const Contributor = (await import('../models/contributor.model')).default;
+      return await Contributor.findById(contributorId).select(
+        'name email status fieldOfActivity'
+      );
+    } catch (error) {
+      console.error(
+        'Erreur lors de la récupération des détails du contributeur:',
+        error
+      );
+      return null;
+    }
+  }
+
+  // Méthode pour récupérer les packages disponibles
+  static async getAvailablePackages() {
+    try {
+      const PackageModel = (await import('../models/package.model')).default;
+      return await PackageModel.find({
+        isActive: true,
+      }).select(
+        'name description price duration durationUnit isFree maxFreeTrialDuration'
+      );
+    } catch (error) {
+      console.error('Erreur lors de la récupération des packages:', error);
+      return [];
     }
   }
 }

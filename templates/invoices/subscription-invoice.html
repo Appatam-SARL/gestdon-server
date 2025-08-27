@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture {{INVOICE_NUMBER}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Étoiles décoratives - plus petites */
+        .star-decoration {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #ff4757;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            z-index: 10;
+        }
+
+        .star-decoration.blue {
+            background: #3742fa;
+        }
+
+        .star-decoration.yellow {
+            background: #ffa502;
+        }
+
+        .star-decoration.top-right {
+            top: 15px;
+            right: 20px;
+            transform: scale(1);
+        }
+
+        .star-decoration.middle-right {
+            top: 45%;
+            right: 25px;
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .star-decoration.bottom-left {
+            bottom: 80px;
+            left: 20px;
+            transform: scale(1);
+        }
+
+        .star-decoration.bottom-right {
+            bottom: 80px;
+            right: 20px;
+            transform: scale(1);
+        }
+
+        /* Points décoratifs - plus petits et moins nombreux */
+        .dot-pattern {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        .dot-pattern.left {
+            left: 15px;
+        }
+
+        .dot-pattern.right {
+            right: 15px;
+        }
+
+        .dot-pattern.left:nth-child(1) {
+            top: 150px;
+        }
+
+        .dot-pattern.left:nth-child(2) {
+            top: 170px;
+        }
+
+        .dot-pattern.left:nth-child(3) {
+            top: 190px;
+        }
+
+        .dot-pattern.left:nth-child(4) {
+            top: 210px;
+        }
+
+        .dot-pattern.left:nth-child(5) {
+            top: 230px;
+        }
+
+        .dot-pattern.left:nth-child(6) {
+            top: 250px;
+        }
+
+        .dot-pattern.right:nth-child(1) {
+            top: 150px;
+        }
+
+        .dot-pattern.right:nth-child(2) {
+            top: 170px;
+        }
+
+        .dot-pattern.right:nth-child(3) {
+            top: 190px;
+        }
+
+        .dot-pattern.right:nth-child(4) {
+            top: 210px;
+        }
+
+        .dot-pattern.right:nth-child(5) {
+            top: 230px;
+        }
+
+        .dot-pattern.right:nth-child(6) {
+            top: 250px;
+        }
+
+        /* Titre principal - plus compact */
+        .main-title {
+            text-align: center;
+            padding: 20px 15px 10px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+        }
+
+        .main-title h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-title .subtitle {
+            font-size: 1rem;
+            font-style: italic;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        /* En-tête de la facture - plus compact */
+        .invoice-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            padding: 25px;
+            background: white;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .company-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: #f8f9fa;
+            border: 2px solid #3742fa;
+        }
+
+        .company-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+
+        .company-logo::after {
+            content: '★';
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            color: #3742fa;
+            font-size: 12px;
+            background: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .company-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .invoice-number {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .invoice-date {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .client-info {
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 3px solid #3742fa;
+        }
+
+        .client-info h3 {
+            color: #3742fa;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .client-details {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
+        }
+
+        .client-details p {
+            margin-bottom: 4px;
+            color: #856404;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        /* Tableau des services - plus compact */
+        .services-section {
+            padding: 25px;
+            background: white;
+        }
+
+        .services-header {
+            background: #3742fa;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+        }
+
+        .services-body {
+            border: 2px solid #3742fa;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .service-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            align-items: center;
+        }
+
+        .service-row:last-child {
+            border-bottom: none;
+        }
+
+        .service-description {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .service-qty,
+        .service-price,
+        .service-total {
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        /* Résumé et paiement - plus compact */
+        .summary-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            padding: 25px;
+            background: white;
+        }
+
+        .payment-details {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
+        }
+
+        .payment-details p {
+            margin-bottom: 4px;
+            color: #856404;
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .billing-summary {
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 3px solid #3742fa;
+        }
+
+        .billing-summary h3 {
+            color: #3742fa;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .billing-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .billing-item:last-child {
+            border-bottom: none;
+            border-top: 2px solid #3742fa;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #3742fa;
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-top: 15px;
+            color: #3742fa;
+        }
+
+        /* Conditions - plus compact */
+        .terms-section {
+            padding: 25px;
+            background: white;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .terms-section h3 {
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .terms-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            color: #666;
+            line-height: 1.5;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        /* Pied de page - plus compact */
+        .invoice-footer {
+            background: #ff4757;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .footer-left {
+            text-align: left;
+        }
+
+        .footer-left h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .footer-left p {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 3px;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .social-icon {
+            width: 25px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* Optimisations pour une seule page */
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                font-size: 10px;
+            }
+
+            .invoice-container {
+                margin: 0;
+                box-shadow: none;
+                border-radius: 0;
+                max-width: none;
+                min-height: auto;
+            }
+
+            .star-decoration,
+            .dot-pattern {
+                display: none;
+            }
+
+            /* Réduire encore plus les espacements pour l'impression */
+            .main-title {
+                padding: 15px 10px 8px;
+            }
+
+            .main-title h1 {
+                font-size: 1.8rem;
+            }
+
+            .main-title .subtitle {
+                font-size: 0.9rem;
+            }
+
+            .invoice-header {
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .services-section {
+                padding: 20px;
+            }
+
+            .services-header {
+                padding: 12px;
+            }
+
+            .service-row {
+                padding: 12px;
+            }
+
+            .summary-section {
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .billing-summary {
+                padding: 15px;
+            }
+
+            .terms-section {
+                padding: 20px;
+            }
+
+            .invoice-footer {
+                padding: 15px;
+            }
+        }
+
+        /* Responsive pour petits écrans */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .invoice-container {
+                max-width: 100%;
+            }
+
+            .invoice-header {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .summary-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-container">
+        <!-- Étoiles décoratives -->
+        <div class="star-decoration top-right"></div>
+        <div class="star-decoration blue middle-right"></div>
+        <div class="star-decoration yellow bottom-left"></div>
+        <div class="star-decoration bottom-right"></div>
+
+        <!-- Points décoratifs gauches -->
+        <div class="dot-pattern left"></div>
+        <div class="dot-pattern left"></div>
+        <div class="dot-pattern left"></div>
+        <div class="dot-pattern left"></div>
+        <div class="dot-pattern left"></div>
+        <div class="dot-pattern left"></div>
+
+        <!-- Points décoratifs droits -->
+        <div class="dot-pattern right"></div>
+        <div class="dot-pattern right"></div>
+        <div class="dot-pattern right"></div>
+        <div class="dot-pattern right"></div>
+        <div class="dot-pattern right"></div>
+        <div class="dot-pattern right"></div>
+
+        <!-- Titre principal -->
+        <div class="main-title">
+            <h1>FACTURE</h1>
+            <p class="subtitle">Vente</p>
+        </div>
+
+        <!-- En-tête de la facture -->
+        <div class="invoice-header">
+            <div class="company-info">
+                <div class="company-logo">
+                    <img src="data:image/png;base64,{{LOGO_BASE64}}" alt="Logo Contrib"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <div class="logo-fallback"
+                        style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: #3742fa;">
+                        C</div>
+                </div>
+                <div>
+                    <div class="company-name">CONTRIB</div>
+                    <div class="invoice-number">FACTURE N°{{INVOICE_NUMBER}}</div>
+                    <div class="invoice-date">DATE {{INVOICE_DATE}}</div>
+                </div>
+            </div>
+
+            <div class="client-info">
+                <h3>FACTURER À :</h3>
+                <div class="client-details">
+                    <p>{{CONTRIBUTOR_NAME}}</p>
+                    <p>{{CONTRIBUTOR_ADDRESS}}</p>
+                    <p>{{CONTRIBUTOR_CITY}}</p>
+                    <p>{{CONTRIBUTOR_COUNTRY}}</p>
+                    <p>{{CONTRIBUTOR_EMAIL}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des services -->
+        <div class="services-section">
+            <div class="services-header">
+                <div>DESCRIPTION DU SERVICE</div>
+                <div>QTE</div>
+                <div>PRIX</div>
+                <div>TOTAL</div>
+            </div>
+            <div class="services-body">
+                <div class="service-row">
+                    <div class="service-description">{{PACKAGE_NAME}} - {{SUBSCRIPTION_TYPE}}</div>
+                    <div class="service-qty">01</div>
+                    <div class="service-price">{{SUBTOTAL}} {{CURRENCY}}</div>
+                    <div class="service-total">{{SUBTOTAL}} {{CURRENCY}}</div>
+                </div>
+                <div class="service-row">
+                    <div class="service-description">TVA (20%)</div>
+                    <div class="service-qty">01</div>
+                    <div class="service-price">{{TAX}} {{CURRENCY}}</div>
+                    <div class="service-total">{{TAX}} {{CURRENCY}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résumé et paiement -->
+        <div class="summary-section">
+            <div class="billing-summary">
+                <h3>RÉSUMÉ DE FACTURATION</h3>
+                <div class="billing-item">
+                    <span>Sous-total</span>
+                    <span>{{SUBTOTAL}} {{CURRENCY}}</span>
+                </div>
+                <div class="billing-item">
+                    <span>TVA (20%)</span>
+                    <span>{{TAX}} {{CURRENCY}}</span>
+                </div>
+                <div class="billing-item">
+                    <span>Total</span>
+                    <span>{{TOTAL}} {{CURRENCY}}</span>
+                </div>
+
+                <div class="total-amount">
+                    {{TOTAL}} {{CURRENCY}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conditions -->
+        <div class="terms-section">
+            <h3>CONDITIONS ET TERMES</h3>
+            <div class="terms-text">
+                Cette facture couvre la période d'abonnement du {{START_DATE}} au {{END_DATE}} ({{DURATION}}).
+                Le paiement est dû à réception de cette facture. En cas de retard de paiement, des frais de retard
+                pourront être appliqués conformément à nos conditions générales de vente.
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="invoice-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <h4>WWW.CONTRIB.COM</h4>
+                    <p>Plateforme de gestion des abonnements</p>
+                    <p>Support technique disponible 24/7</p>
+                </div>
+                <div class="footer-right">
+                    <h4>@CONTRIB</h4>
+                    <div class="social-icons">
+                        <div class="social-icon">f</div>
+                        <div class="social-icon">▶</div>
+                        <div class="social-icon">📷</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

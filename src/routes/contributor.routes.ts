@@ -1,7 +1,5 @@
 import { Router } from 'express';
 import { ContributorController } from '../controllers/contributor.controller';
-import { authMiddleware } from '../middlewares/auth.middleware';
-import { roleMiddleware } from '../middlewares/role.middleware';
 import { validateRequest } from '../middlewares/validate-request.middleware';
 import { contributorValidation } from '../validations/contributor.validation';
 
@@ -21,8 +19,8 @@ router.get(
 
 // All contributor routes require authentication and partner-level access (specifically, OWNER role)
 // Modify roleMiddleware as needed based on your exact requirements for contributor management permissions
-router.use(authMiddleware);
-router.use(roleMiddleware(['user', 'admin'])); // Assuming only authenticated partners can manage contributors
+// router.use(authMiddleware);
+// router.use(roleMiddleware(['user', 'admin'])); // Assuming only authenticated partners can manage contributors
 // Further middleware might be needed to ensure the user is an 'OWNER' of the partner
 // For simplicity, we'll assume the authenticated 'partner' in req.partner is the owner or has necessary permissions
 
@@ -54,6 +52,42 @@ router.delete(
   '/:id',
   validateRequest({ params: contributorValidation.deleteContributor.params }),
   ContributorController.deleteContributor
+);
+
+router.patch(
+  '/follow',
+  validateRequest({ body: contributorValidation.followContributor.body }),
+  ContributorController.followContributor
+);
+
+router.patch(
+  '/unfollow',
+  validateRequest({ body: contributorValidation.unfollowContributor.body }),
+  ContributorController.unfollowContributor
+);
+
+router.get(
+  '/:id/followers',
+  validateRequest({ params: contributorValidation.getFollowers.params }),
+  ContributorController.getFollowersContributor
+);
+
+router.get(
+  '/:id/following',
+  validateRequest({ params: contributorValidation.getFollowing.params }),
+  ContributorController.getFollowing
+);
+
+router.get(
+  '/:id/followers-count',
+  validateRequest({ params: contributorValidation.getFollowersCount.params }),
+  ContributorController.countTotalFollowers
+);
+
+router.get(
+  '/:id/following-count',
+  validateRequest({ params: contributorValidation.getFollowingCount.params }),
+  ContributorController.countTotalFollowing
 );
 
 export { router as contributorRoutes };

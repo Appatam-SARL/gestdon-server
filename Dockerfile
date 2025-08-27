@@ -19,6 +19,16 @@ RUN npm run build
 # Étape 2 : image de production
 FROM node:20-alpine
 
+# Installer les dépendances système pour Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
 # Créer un utilisateur non-root pour la sécurité
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S appuser -u 1001
@@ -43,6 +53,10 @@ USER appuser
 
 # Exposer le port
 EXPOSE 5000
+
+# Variables d'environnement pour Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Variables d'environnement par défaut
 ENV NODE_ENV=production

@@ -23,30 +23,22 @@ const redisConfig: RedisConfig = {
   keyPrefix: process.env.REDIS_PREFIX || 'contrib:',
 };
 
-// Création de l'instance Redis
-// const redisClient = new Redis({
-//   url: process.env.REDIS_URL!,
-//   token: process.env.REDIS_TOKEN!,
-// });
+const redisClient = new Redis(
+  'redis://default:Ee0kMo1GzvB5wrbLhZ9xeVVtZEuhDHIY@redis-16318.c241.us-east-1-4.ec2.redns.redis-cloud.com:16318'
+);
 
-// async function test() {
-//   await redisClient.set('foo', 'bar');
-// }
-// test().then(() => {
-//   console.log('Redis is working');
+// const redisClient = new Redis({
+//   host: redisConfig.host,
+//   port: redisConfig.port,
+//   password: redisConfig.password || undefined,
+//   db: redisConfig.db,
+//   keyPrefix: redisConfig.keyPrefix,
+//   retryStrategy: (times) => {
+//     // Stratégie de reconnexion: expiration exponentielle avec un max de 30 secondes
+//     const delay = Math.min(times * 1000, 30000);
+//     return delay;
+//   },
 // });
-const redisClient = new Redis({
-  host: redisConfig.host,
-  port: redisConfig.port,
-  password: redisConfig.password || undefined,
-  db: redisConfig.db,
-  keyPrefix: redisConfig.keyPrefix,
-  retryStrategy: (times) => {
-    // Stratégie de reconnexion: expiration exponentielle avec un max de 30 secondes
-    const delay = Math.min(times * 1000, 30000);
-    return delay;
-  },
-});
 
 // Gestion des événements
 redisClient.on('connect', () => {
@@ -61,10 +53,5 @@ redisClient.on('error', (err) => {
 redisClient.on('reconnecting', () => {
   logger.redis('Tentative de reconnexion à Redis...');
 });
-
-// redisClient.ping().then(() => {
-//   logger.redis('Connexion à Redis établie');
-// });
-// redisClient.
 
 export { redisClient, redisConfig };

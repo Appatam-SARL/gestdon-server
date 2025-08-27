@@ -97,4 +97,58 @@ export const contributorValidation = {
       }),
     }),
   },
+  //follow
+  followContributor: {
+    body: z.object({
+      followerId: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+      followedId: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
+  //unfollow
+  unfollowContributor: {
+    body: z.object({
+      followerId: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+      followedId: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
+  //getFollowers
+  getFollowers: {
+    params: z.object({
+      id: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
+  //getFollowing
+  getFollowing: {
+    params: z.object({
+      id: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
+  //getFollowersCount
+  getFollowersCount: {
+    params: z.object({
+      id: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
+  //getFollowingCount
+  getFollowingCount: {
+    params: z.object({
+      id: z.string().refine((value) => Types.ObjectId.isValid(value), {
+        message: 'Invalid Contributor ID',
+      }),
+    }),
+  },
 };

@@ -63,9 +63,10 @@ export class BeneficiaireController {
       };
 
       // Exécution de la requête
-      const [beneficiaires, total] = await Promise.all([
+      const [beneficiaires, total, totalData] = await Promise.all([
         Beneficiaire.find(filter).sort(sort).skip(skip).limit(Number(limit)),
         Beneficiaire.countDocuments(filter),
+        Beneficiaire.countDocuments({ contributorId }),
       ]);
 
       // Calcul des métadonnées de pagination
@@ -76,6 +77,7 @@ export class BeneficiaireController {
       res.status(200).json({
         success: true,
         data: beneficiaires,
+        totalData,
         message: 'Success',
         metadata: {
           total,

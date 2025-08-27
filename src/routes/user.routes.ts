@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import { UserController } from '../controllers/user.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
+import { subscriptionCheckMiddleware } from '../middlewares/subscription-check.middleware';
 import { validateRequest } from '../middlewares/validate.middleware';
 import { userValidation } from '../validations/user.validation';
 
@@ -61,6 +62,11 @@ router.get('/check-auth/by-token', async (req, res, next) => {
 
 // Routes protégées
 router.use(authMiddleware);
+
+// Appliquer la vérification de souscription aux routes sensibles
+router.use('/profile', subscriptionCheckMiddleware as any as RequestHandler);
+router.use('/stats', subscriptionCheckMiddleware as any as RequestHandler);
+router.use('/mfa', subscriptionCheckMiddleware as any as RequestHandler);
 
 // Profil utilisateur
 router.get('/profile/:id', UserController.getProfile);

@@ -16,6 +16,7 @@ interface IGetAllActivitiesOptions {
 
 interface IPaginatedResponse<T> {
   data: T[];
+  totalData: number;
   pagination: {
     total: number;
     page: number;
@@ -81,13 +82,14 @@ export class ActivityService {
 
     const skip = (page - 1) * limit;
 
-    const [data, total] = await Promise.all([
+    const [data, total, totalData] = await Promise.all([
       ActivityModel.find(filter)
         .populate({ path: 'activityTypeId', select: '-_id label' })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
       ActivityModel.countDocuments(filter),
+      ActivityModel.countDocuments({ contributorId }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -96,6 +98,7 @@ export class ActivityService {
 
     return {
       data,
+      totalData,
       pagination: {
         total,
         page,

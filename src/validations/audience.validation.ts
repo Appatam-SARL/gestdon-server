@@ -56,7 +56,7 @@ export const audienceValidation = {
         })
         .optional(),
       status: z
-        .enum(['PENDING', 'VALIDATED', 'REFUSED', 'ARCHIVED'])
+        .enum(['PENDING', 'VALIDATED', 'REFUSED', 'ARCHIVED', 'DRAFT'])
         .optional(),
     }),
   },
