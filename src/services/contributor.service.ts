@@ -3,6 +3,7 @@ import {
   default as Contributor,
   IContributor,
 } from '../models/contributor.model';
+import { ContributorStatus } from '../types/contributor.types';
 import { ApiError } from '../utils/api-error';
 import { AppError } from '../utils/AppError';
 
@@ -26,7 +27,7 @@ export class ContributorService {
 
     const contributor = new Contributor({
       ...data,
-      status: 'Pending', // Default status as per model
+      status: ContributorStatus.PENDING, // Default status as per model
     });
 
     const savedContributor = await contributor.save();
@@ -56,7 +57,7 @@ export class ContributorService {
     // partnerId?: string,
     filters: {
       search?: string;
-      status?: 'Active' | 'Inactive' | 'Pending';
+      status?: ContributorStatus;
     } = {},
     pagination: {
       page?: number;
@@ -136,7 +137,7 @@ export class ContributorService {
   static async updateContributorStatus(
     contributorId: string,
     partnerId: string,
-    status: 'Active' | 'Inactive' | 'Pending'
+    status: ContributorStatus
   ): Promise<IContributor> {
     const contributor = await Contributor.findOneAndUpdate(
       { _id: contributorId, partner: partnerId },
@@ -161,7 +162,7 @@ export class ContributorService {
   static async deleteContributor(contributorId: string): Promise<IContributor> {
     const contributor = await Contributor.findOneAndUpdate(
       { _id: contributorId },
-      { $set: { status: 'Inactive' } }, // Or a dedicated 'Deleted' status
+      { $set: { status: ContributorStatus.INACTIVE } }, // Or a dedicated 'Deleted' status
       { new: true }
     );
 

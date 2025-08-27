@@ -9,6 +9,7 @@ import { ContributorService } from '../services/contributor.service';
 import { EmailService } from '../services/email.service';
 import PermissionService from '../services/permission.service';
 import { getContributorOwnerWelcomeTemplate } from '../templates/emails/contrib-owner-welcome.template';
+import { ContributorStatus } from '../types/contributor.types';
 import { generatePassword } from '../utils/password.utils';
 import {
   generateVerificationToken,
@@ -133,7 +134,7 @@ export class ContributorController {
 
       const filters = {
         search: search as string | undefined,
-        status: status as 'Active' | 'Inactive' | 'Pending' | undefined,
+        status: status as ContributorStatus,
       };
 
       const pagination = {
