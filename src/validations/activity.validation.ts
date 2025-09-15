@@ -114,6 +114,14 @@ export const activityValidationSchema = {
       }),
     }),
   }),
+  defineBudget: z.object({
+    params: z.object({
+      id: z.string(),
+    }),
+    body: z.object({
+      budget: z.number().min(0, 'Budget must be greater than 0'),
+    }),
+  }),
 };
 
 export type CreateActivityInput = z.infer<typeof createActivitySchema>;

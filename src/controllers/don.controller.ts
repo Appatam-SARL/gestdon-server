@@ -249,15 +249,29 @@ class DonController {
     try {
       const don = await DonService.getDonById(req.params.id);
       if (don) {
-        res.status(200).json(don);
+        res.status(200).json({
+          success: true,
+          message: 'Don trouvé',
+          data: don,
+        });
       } else {
-        res.status(404).json({ message: 'Don not found' });
+        res
+          .status(404)
+          .json({ message: 'Don not found', success: false, data: null });
       }
     } catch (error) {
       if (error instanceof Error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({
+          message: error.message,
+          success: false,
+          data: error.message,
+        });
       } else {
-        res.status(500).json({ message: 'An unknown error occurred' });
+        res.status(500).json({
+          message: 'An unknown error occurred',
+          success: false,
+          data: error,
+        });
       }
     }
   }

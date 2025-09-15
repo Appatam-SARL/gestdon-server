@@ -16,6 +16,7 @@ import agendaroutes from './routes/agenda.routes';
 import audienceRoutes from './routes/audience.routes';
 import beneficiaryType from './routes/beneficiaire-type.routes';
 import beneficiaireRoutes from './routes/beneficiaire.routes';
+import categoryMouvementCheckoutRoutes from './routes/category-mouvement-checkout.routes';
 import { chatRoutes } from './routes/chat.routes';
 import commentRoutes from './routes/comment.route';
 import contactRoutes from './routes/contact.routes';
@@ -28,7 +29,9 @@ import fanRoutes from './routes/fan.routes';
 import { fileRoutes } from './routes/file.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import { logRoutes } from './routes/log.routes';
+import { mediaRoutes } from './routes/media.routes';
 import menuRoutes from './routes/menu.routes';
+import mouvementCheckoutRoutes from './routes/mouvement-checkout.routes';
 import notificationRoutes from './routes/notification.routes';
 import packageRoutes from './routes/package.routes';
 import permissionRoutes from './routes/permission.routes';
@@ -36,6 +39,7 @@ import postRoute from './routes/post.routes';
 import promesseRoutes from './routes/promesse.routes';
 import reportRoutes from './routes/report.routes';
 import subscriptionRoutes from './routes/subscription.routes';
+import typeMouvementCheckoutRoutes from './routes/type-mouvement-checkout.routes';
 import { userRoutes } from './routes/user.routes';
 
 import { CronManagerService } from './services/cron-manager.service';
@@ -105,6 +109,7 @@ app.use(`/${VERSION}/users`, userRoutes);
 app.use(`/${VERSION}/fans`, fanRoutes);
 app.use(`/${VERSION}/logs`, logRoutes);
 app.use(`/${VERSION}/files`, fileRoutes);
+app.use(`/${VERSION}/media`, mediaRoutes);
 app.use(`/${VERSION}/documents`, documentRoutes);
 app.use(`/${VERSION}/notifications`, notificationRoutes);
 app.use(`/${VERSION}/chat`, chatRoutes);
@@ -125,6 +130,12 @@ app.use(`/${VERSION}/menus`, menuRoutes);
 app.use(`/${VERSION}/packages`, packageRoutes);
 app.use(`/${VERSION}/subscriptions`, subscriptionRoutes);
 app.use(`/${VERSION}/invoices`, invoiceRoutes);
+app.use(`/${VERSION}/mouvements`, mouvementCheckoutRoutes);
+app.use(`/${VERSION}/type-mouvement-checkouts`, typeMouvementCheckoutRoutes);
+app.use(
+  `/${VERSION}/category-mouvement-checkouts`,
+  categoryMouvementCheckoutRoutes
+);
 // Initialiser Socket.io via le service uniquement
 SocketService.initialize(server);
 

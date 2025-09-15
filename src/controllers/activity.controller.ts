@@ -502,4 +502,22 @@ export class ActivityController {
       }
     }
   }
+  static async defineBudget(req: Request, res: Response): Promise<void> {
+    try {
+      const activity = await ActivityService.defineBudget(
+        req.params.id,
+        req.body
+      );
+      if (!activity) {
+        res.status(404).json({ message: 'Activity not found' });
+        return;
+      }
+      res.status(200).json({ message: 'Activity budget defined successfully' });
+    } catch (error) {
+      res.status(500).json({
+        message: 'Error defining activity budget',
+        error,
+      });
+    }
+  }
 }

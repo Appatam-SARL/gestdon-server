@@ -210,4 +210,14 @@ export class ActivityService {
   ): Promise<IActivity | null> {
     return ActivityModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
+
+  static async defineBudget(id: string, data: any): Promise<IActivity | null> {
+    return ActivityModel.findByIdAndUpdate(
+      id,
+      { budget: data.budget },
+      {
+        new: true,
+      }
+    ).exec();
+  }
 }

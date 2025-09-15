@@ -14,7 +14,7 @@ COPY tsconfig.json ./
 COPY src ./src
 
 # Compiler TypeScript
-RUN npm run build
+RUN npm install --include=dev && npm run build
 
 # Étape 2 : image de production
 FROM node:20-alpine

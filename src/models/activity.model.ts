@@ -4,6 +4,7 @@ export interface IActivity extends Document {
   title: string;
   description?: string;
   status: 'Draft' | 'Approved' | 'Rejected' | 'Waiting';
+  budget?: number;
   contributorId: Schema.Types.ObjectId;
   beneficiaryId?: Schema.Types.ObjectId;
   createdBy: Schema.Types.ObjectId;
@@ -71,6 +72,12 @@ const activitySchema = new Schema<IActivity>(
     startDate: Date,
     endDate: Date,
     motif: String,
+    budget: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

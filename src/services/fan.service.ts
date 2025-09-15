@@ -242,10 +242,10 @@ export class FanService {
 
     // Retirer des following
     fan.following = fan.following.filter(
-      (id) => !(id as any).equals(targetFan._id)
+      (id: any) => !id.equals(targetFan._id)
     );
     targetFan.followers = targetFan.followers.filter(
-      (id) => !(id as any).equals(fan._id)
+      (id: any) => !id.equals(fan._id)
     );
 
     await Promise.all([fan.save(), targetFan.save()]);
