@@ -1,0 +1,32 @@
+### Variables d'environnement
+@baseUrl = http://localhost:3000/api
+@contributorId = 507f1f77bcf86cd799439011
+
+### Créer une nouvelle catégorie de mouvement checkout
+POST {{baseUrl}}/category-mouvement-checkout
+Content-Type: application/json
+
+{
+  "name": "Ventes en ligne",
+  "contributorId": "{{contributorId}}"
+}
+
+### Récupérer toutes les catégories avec pagination
+GET {{baseUrl}}/category-mouvement-checkout?page=1&limit=10&search=ventes
+
+### Récupérer toutes les catégories par contributeur
+GET {{baseUrl}}/category-mouvement-checkout/contributor/{{contributorId}}
+
+### Récupérer une catégorie par ID
+GET {{baseUrl}}/category-mouvement-checkout/507f1f77bcf86cd799439012
+
+### Mettre à jour une catégorie
+PUT {{baseUrl}}/category-mouvement-checkout/507f1f77bcf86cd799439012
+Content-Type: application/json
+
+{
+  "name": "Ventes e-commerce"
+}
+
+### Supprimer une catégorie
+DELETE {{baseUrl}}/category-mouvement-checkout/507f1f77bcf86cd799439012

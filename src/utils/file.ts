@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { NextFunction, Request, Response } from 'express';
 import { promises as fs } from 'fs';
 import multer from 'multer';
+import path from 'path';
 // Les autres imports avec any resteront pour l'instant
 const B2 = require('backblaze-b2') as any;
 const Jimp = require('jimp') as any;
@@ -179,6 +180,94 @@ export const uploadBackblaze = async (
     console.log('🚀 ~ exports.uploadBackblaze= ~ error:', error);
     handleError(error, res);
   }
+};
+
+// =============================
+// Upload local (Multer disque)
+// =============================
+
+const UPLOAD_ROOT = path.join(process.cwd(), 'public', 'uploads');
+
+const sanitizeFileName = (originalName: string): string => {
+  const name = originalName.toLowerCase().replace(/[^\w._-]/g, '_');
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  return `${uniqueSuffix}_${name}`;
+};
+
+const ensureDirectory = async (directoryPath: string): Promise<void> => {
+  await fs.mkdir(directoryPath, { recursive: true });
+};
+
+const getCategoryFromParams = (req: Request): string => {
+  // contributor: images | documents | videos | logo
+  // fan: profile | cover
+  const category = (req.params as Record<string, string>).category || '';
+  return category;
+};
+
+const buildDestinationDirectory = async (req: Request): Promise<string> => {
+  const contributorId = (req.params as Record<string, string>).contributorId;
+  const fanId = (req.params as Record<string, string>).fanId;
+  const category = getCategoryFromParams(req);
+
+  let parts: string[] = ['uploads'];
+  if (contributorId) {
+    parts = ['uploads', 'contributors', contributorId, category];
+  } else if (fanId) {
+    parts = ['uploads', 'fans', fanId, category];
+  }
+  const dir = path.join(process.cwd(), 'public', ...parts);
+  await ensureDirectory(dir);
+  return dir;
+};
+
+const allowedMimeByCategory: Record<string, RegExp> = {
+  images: /^image\//,
+  documents:
+    /^(application\/pdf|application\/(msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document)|text\/plain)$/,
+  videos: /^video\//,
+  logo: /^image\//,
+  profile: /^image\//,
+  cover: /^image\//,
+};
+
+const localDiskStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    try {
+      const dir = await buildDestinationDirectory(req);
+      cb(null, dir);
+    } catch (err) {
+      cb(err as Error, '');
+    }
+  },
+  filename: (_req, file, cb) => {
+    cb(null, sanitizeFileName(file.originalname));
+  },
+});
+
+const localFileFilter: multer.Options['fileFilter'] = (req, file, cb) => {
+  const category = getCategoryFromParams(req);
+  const allowed = allowedMimeByCategory[category];
+  if (!allowed) {
+    return cb(new Error('Catégorie non prise en charge'));
+  }
+  if (!allowed.test(file.mimetype)) {
+    return cb(new Error('Type de fichier non autorisé'));
+  }
+  cb(null, true);
+};
+
+export const uploadLocalMulter = multer({
+  storage: localDiskStorage,
+  fileFilter: localFileFilter,
+  limits: {
+    fileSize: 25 * 1024 * 1024, // 25MB
+  },
+});
+
+export const toPublicUrl = (absolutePath: string): string => {
+  const rel = path.relative(path.join(process.cwd(), 'public'), absolutePath);
+  return `/${rel.split(path.sep).join('/')}`;
 };
 
 export const deleteFileBackblaze = async (

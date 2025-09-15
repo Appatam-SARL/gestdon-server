@@ -75,5 +75,11 @@ router.delete(
   validateRequest(activityValidationSchema.delete),
   ActivityController.deleteActivity
 );
+// definir un budget pour l'activité
+router.patch(
+  '/:id/define-budget',
+  validateRequest(activityValidationSchema.defineBudget),
+  ActivityController.defineBudget
+);
 
 export default router;

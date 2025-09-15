@@ -52,8 +52,15 @@ class PromesseController {
 
   static async getAllPromesses(req: Request, res: Response): Promise<void> {
     try {
-      const { page, limit, search, beneficiaireId, contributorId, period } =
-        req.query;
+      const {
+        page,
+        limit,
+        search,
+        beneficiaireId,
+        contributorId,
+        period,
+        status,
+      } = req.query;
 
       const filter: any = {};
 
@@ -63,6 +70,10 @@ class PromesseController {
 
       if (contributorId) {
         filter.contributorId = contributorId;
+      }
+
+      if (status) {
+        filter.status = status;
       }
 
       if (period) {

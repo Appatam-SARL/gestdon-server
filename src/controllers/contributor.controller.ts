@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { config } from '../config';
 import { IPermissionConstant } from '../constants/permission';
 import PERMISSIONSOWNER from '../constants/permission-owner';
+// import FollowRequest from '../models/followRequest.model';
 import FollowRequest from '../models/followRequest.model';
 import { IUser, User } from '../models/user.model';
 import { ContributorService } from '../services/contributor.service';
