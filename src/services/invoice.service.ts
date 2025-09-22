@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import puppeteer from 'puppeteer';
+import PDFDocument from 'pdfkit';
 import Contributor from '../models/contributor.model';
 import PackageModel from '../models/package.model';
 import SubscriptionModel from '../models/subscription.model';
@@ -753,7 +753,7 @@ export class InvoiceService {
       await this.ensureInvoiceTemplate();
 
       // Encoder le logo en base64
-      const logoPath = path.join(process.cwd(), 'public', 'logo_icon.png');
+      const logoPath = path.join(process.cwd(), 'public', 'logo.png');
       let logoBase64 = '';
       try {
         if (fs.existsSync(logoPath)) {
@@ -853,8 +853,8 @@ export class InvoiceService {
       // Générer le HTML de la facture
       const htmlContent = this.generateInvoiceHTMLFromTemplate(invoiceData);
 
-      // Convertir le HTML en PDF
-      const pdfBuffer = await this.htmlToPDF(htmlContent);
+      // Convertir les données de facture en PDF via PDFKit
+      const pdfBuffer = await this.generatePDFWithPDFKit(invoiceData);
 
       // Sauvegarder la facture PDF sur le serveur
       const filename = `facture-${invoiceData.invoiceNumber}-${Date.now()}.pdf`;
@@ -882,93 +882,291 @@ export class InvoiceService {
   }
 
   /**
-   * Convertir du HTML en PDF
+   * Génération PDF via PDFKit (sans moteur HTML)
    */
-  private static async htmlToPDF(html: string): Promise<Buffer> {
-    let browser;
-    let page;
+  private static async generatePDFWithPDFKit(data: any): Promise<Buffer> {
+    return await new Promise<Buffer>((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 36 });
+        const chunks: Buffer[] = [];
 
-    try {
-      // Lancer le navigateur avec la configuration optimisée
-      browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--disable-extensions',
-          '--disable-plugins',
-          '--disable-javascript',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-ipc-flooding-protection',
-        ],
-        timeout: 30000,
-      });
+        doc.on('data', (chunk) => chunks.push(chunk as Buffer));
+        doc.on('error', (err) => reject(err));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        const PRIMARY = '#6c2bd9';
+        const TEXT_MUTED = '#6b7280';
+        const BORDER = '#e5e7eb';
 
-      page = await browser.newPage();
+        // Dimensions utiles
+        const pageWidth = doc.page.width;
+        const contentWidth =
+          pageWidth - doc.page.margins.left - doc.page.margins.right;
+        const leftX = doc.page.margins.left;
+        const topY = doc.page.margins.top;
 
-      // Définir des timeouts
-      page.setDefaultTimeout(30000);
-      page.setDefaultNavigationTimeout(30000);
+        // Bandeau d’en-tête
+        const headerH = 64;
+        doc.save();
+        doc.rect(leftX, topY, contentWidth, headerH).fill(PRIMARY);
+        try {
+          const logoPath = path.join(process.cwd(), 'public', 'logo.png');
+          if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, leftX + 12, topY + 12, {
+              width: 40,
+              height: 40,
+            });
+          }
+        } catch {}
+        doc.fillColor('white');
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(18)
+          .text('FACTURE', leftX + 64, topY + 14, {
+            width: contentWidth - 76,
+            align: 'left',
+          });
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .text(`Facture N° ${data.invoiceNumber}`, leftX + 64, topY + 36)
+          .text(`Date: ${data.invoiceDate}`, leftX + 64, topY + 50);
+        doc.restore();
 
-      // Permettre le chargement du logo mais bloquer les autres ressources non essentielles
-      await page.setRequestInterception(true);
-      page.on('request', (req) => {
-        if (req.url().includes('logo_icon.png')) {
-          req.continue(); // Permettre le logo
-        } else if (
-          ['font', 'media', 'stylesheet', 'script'].includes(req.resourceType())
-        ) {
-          req.abort(); // Bloquer les autres ressources non essentielles
-        } else {
-          req.continue();
-        }
-      });
+        // Pastille statut paiement
+        const status = String(data.billing.paymentStatus ?? '').toLowerCase();
+        const isPaid = ['paid', 'success', 'completed', 'payé'].some((s) =>
+          status.includes(s)
+        );
+        const statusText = isPaid ? 'Payé' : 'En attente';
+        const statusColor = isPaid ? '#10b981' : '#f59e0b';
+        const pillW = 90;
+        const pillH = 18;
+        const pillY = topY + headerH + 10;
+        doc
+          .roundedRect(leftX + contentWidth - pillW, pillY, pillW, pillH, 9)
+          .fill(statusColor);
+        doc
+          .fillColor('white')
+          .font('Helvetica-Bold')
+          .fontSize(9)
+          .text(statusText, leftX + contentWidth - pillW, pillY + 4, {
+            width: pillW,
+            align: 'center',
+          });
+        doc.fillColor('black');
 
-      // Définir le contenu HTML
-      await page.setContent(html, {
-        waitUntil: 'domcontentloaded',
-        timeout: 15000,
-      });
+        // Carte client
+        const clientY = pillY + pillH + 10;
+        doc
+          .roundedRect(leftX, clientY, contentWidth, 86, 8)
+          .strokeColor(BORDER)
+          .lineWidth(1)
+          .stroke();
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .fillColor(PRIMARY)
+          .text('Facturer à', leftX + 12, clientY + 10);
+        doc.fillColor('black').font('Helvetica').fontSize(10);
+        const addr = data.contributor.address ?? {};
+        doc
+          .text(data.contributor.name ?? '', leftX + 12, clientY + 30)
+          .text(data.contributor.email ?? '')
+          .text(`${addr.street ?? ''}`)
+          .text(`${addr.city ?? ''} ${addr.postalCode ?? ''}`)
+          .text(`${addr.country ?? ''}`);
 
-      // Attendre que le contenu soit chargé
-      await page.waitForFunction('() => document.readyState === "complete"', {
-        timeout: 10000,
-      });
+        // Carte abonnement
+        const subY = clientY + 86 + 10;
+        doc
+          .roundedRect(leftX, subY, contentWidth, 74, 8)
+          .strokeColor(BORDER)
+          .lineWidth(1)
+          .stroke();
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .fillColor(PRIMARY)
+          .text('Détails de l’abonnement', leftX + 12, subY + 10);
+        doc.fillColor('black').font('Helvetica').fontSize(10);
+        doc
+          .text(
+            `Offre: ${data.subscription.packageName}`,
+            leftX + 12,
+            subY + 30
+          )
+          .text(
+            `Période: ${data.subscription.startDate} → ${data.subscription.endDate}`
+          )
+          .text(`Durée: ${data.subscription.duration}`)
+          .text(
+            `Type: ${
+              data.subscription.isFreeTrial
+                ? 'Essai Gratuit'
+                : 'Abonnement Payant'
+            }`
+          );
 
-      // Attendre un peu pour le rendu
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Tableau des lignes
+        const tableY = subY + 74 + 14;
+        const colX = [
+          leftX + 12,
+          leftX + 12 + 290,
+          leftX + 12 + 370,
+          leftX + 12 + 450,
+        ];
+        const rowH = 22;
 
-      // Générer le PDF
-      const pdf = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20mm',
-          right: '20mm',
-          bottom: '20mm',
-          left: '20mm',
-        },
-        timeout: 15000,
-      });
+        // En-tête tableau
+        doc.save();
+        doc.rect(leftX, tableY, contentWidth, rowH).fill(PRIMARY);
+        doc.fillColor('white').font('Helvetica-Bold').fontSize(10);
+        doc.text('Description', colX[0], tableY + 6, { width: 280 });
+        doc.text('Qté', colX[1], tableY + 6, { width: 60, align: 'right' });
+        doc.text('Prix', colX[2], tableY + 6, { width: 60, align: 'right' });
+        doc.text('Total', colX[3], tableY + 6, { width: 60, align: 'right' });
+        doc.restore();
 
-      return Buffer.from(pdf);
-    } catch (error) {
-      throw new Error(`Erreur lors de la conversion HTML vers PDF: ${error}`);
-    } finally {
-      if (page) {
-        await page.close();
+        // Lignes du tableau (zebra)
+        const rows = [
+          [
+            `${data.subscription.packageName} - ${
+              data.subscription.isFreeTrial
+                ? 'Essai Gratuit'
+                : 'Abonnement Payant'
+            }`,
+            '1',
+            `${Number(data.billing.subtotal).toFixed(2)} ${
+              data.billing.currency
+            }`,
+            `${Number(data.billing.subtotal).toFixed(2)} ${
+              data.billing.currency
+            }`,
+          ],
+          [
+            'TVA (20%)',
+            '1',
+            `${Number(data.billing.tax).toFixed(2)} ${data.billing.currency}`,
+            `${Number(data.billing.tax).toFixed(2)} ${data.billing.currency}`,
+          ],
+        ];
+
+        let y = tableY + rowH;
+        rows.forEach((r, idx) => {
+          const bg = idx % 2 === 0 ? '#faf5ff' : '#ffffff';
+          doc.save();
+          doc.rect(leftX, y, contentWidth, rowH).fill(bg);
+          doc.restore();
+          doc.font('Helvetica').fontSize(10).fillColor('black');
+          doc.text(r[0], colX[0], y + 6, { width: 280 });
+          doc.text(r[1], colX[1], y + 6, { width: 60, align: 'right' });
+          doc.text(r[2], colX[2], y + 6, { width: 60, align: 'right' });
+          doc.text(r[3], colX[3], y + 6, { width: 60, align: 'right' });
+          y += rowH;
+        });
+
+        // Résumé à droite
+        const summaryW = 220;
+        const summaryX = leftX + contentWidth - summaryW;
+        const summaryY = y + 10;
+        doc
+          .roundedRect(summaryX, summaryY, summaryW, 88, 8)
+          .strokeColor(BORDER)
+          .lineWidth(1)
+          .stroke();
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(12)
+          .fillColor(PRIMARY)
+          .text('Résumé', summaryX + 12, summaryY + 10);
+        doc.fillColor('black').font('Helvetica').fontSize(10);
+        const lineY0 = summaryY + 34;
+        doc.fillColor(TEXT_MUTED).text('Sous-total', summaryX + 12, lineY0);
+        doc
+          .fillColor('black')
+          .text(
+            `${Number(data.billing.subtotal).toFixed(2)} ${
+              data.billing.currency
+            }`,
+            summaryX + 12,
+            lineY0,
+            { width: summaryW - 24, align: 'right' }
+          );
+        const lineY1 = lineY0 + 14;
+        doc.fillColor(TEXT_MUTED).text('TVA (20%)', summaryX + 12, lineY1);
+        doc
+          .fillColor('black')
+          .text(
+            `${Number(data.billing.tax).toFixed(2)} ${data.billing.currency}`,
+            summaryX + 12,
+            lineY1,
+            { width: summaryW - 24, align: 'right' }
+          );
+        const lineY2 = lineY1 + 18;
+        doc.save();
+        doc
+          .moveTo(summaryX + 12, lineY2 - 6)
+          .lineTo(summaryX + summaryW - 12, lineY2 - 6)
+          .strokeColor(BORDER)
+          .lineWidth(1)
+          .stroke();
+        doc.restore();
+        doc
+          .font('Helvetica-Bold')
+          .fillColor(PRIMARY)
+          .text('Total', summaryX + 12, lineY2);
+        doc
+          .fillColor(PRIMARY)
+          .text(
+            `${Number(data.billing.total).toFixed(2)} ${data.billing.currency}`,
+            summaryX + 12,
+            lineY2,
+            { width: summaryW - 24, align: 'right' }
+          );
+
+        // Conditions
+        const termsY = summaryY + 88 + 12;
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(11)
+          .fillColor('black')
+          .text('Conditions', leftX, termsY);
+        doc
+          .font('Helvetica')
+          .fontSize(9)
+          .fillColor(TEXT_MUTED)
+          .text(
+            `Cette facture couvre la période d'abonnement du ${data.subscription.startDate} au ${data.subscription.endDate} (${data.subscription.duration}).`,
+            leftX,
+            termsY + 14,
+            { width: contentWidth - 4 }
+          );
+        doc.fillColor('black');
+
+        // Pied de page
+        const footerH = 36;
+        const footerY = doc.page.height - doc.page.margins.bottom - footerH;
+        doc.save();
+        doc.rect(leftX, footerY, contentWidth, footerH).fill(PRIMARY);
+        doc
+          .fillColor('white')
+          .font('Helvetica-Bold')
+          .fontSize(10)
+          .text('CONTRIB', leftX + 12, footerY + 12);
+        doc
+          .font('Helvetica')
+          .text(
+            'contact@contrib.com  •  https://contrib.com',
+            leftX + 80,
+            footerY + 12
+          );
+        doc.restore();
+
+        doc.end();
+      } catch (err) {
+        reject(err);
       }
-      if (browser) {
-        await browser.close();
-      }
-    }
+    });
   }
 
   /**
