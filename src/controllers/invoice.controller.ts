@@ -127,14 +127,22 @@ export class InvoiceController {
         return;
       }
 
-      const { htmlContent } = result.data;
+      const { content, filename, contentType, isPDF } = result.data;
 
-      // Définir les headers pour l'affichage
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Disposition', 'inline');
-
-      // Envoyer le HTML
-      res.send(htmlContent);
+      // Définir les headers pour l'affichage inline
+      res.setHeader('Content-Type', contentType);
+      res.setHeader(
+        'Content-Disposition',
+        'inline; filename="' + filename + '"'
+      );
+      if (Buffer.isBuffer(content)) {
+        res.setHeader('Content-Length', content.length);
+        res.send(content);
+      } else {
+        const html = String(content);
+        res.setHeader('Content-Length', Buffer.byteLength(html, 'utf8'));
+        res.send(html);
+      }
     } catch (error) {
       next(error);
     }
