@@ -26,6 +26,15 @@ const createContributorBodySchema = z.object({
     .optional(),
   phoneNumber: z.string().optional(),
   address: addressSchema,
+  typeBeneficiary: z
+    .array(
+      z.object({
+        id: z.string().min(1, "L'ID est requis"),
+        label: z.string().min(1, 'Le label est requis'),
+        description: z.string().optional(),
+      })
+    )
+    .min(1, 'Au moins un type de bénéficiaire est requis'),
   owner: z.object({
     firstName: z.string().min(2, 'Name must be at least 2 characters long'),
     lastName: z.string().min(2, 'Name must be at least 2 characters long'),

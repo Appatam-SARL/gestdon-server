@@ -13,11 +13,12 @@ export class ContributorService {
    * The partner ID is taken from the authenticated partner member (owner).
    */
   static async createContributor(
-    data: Omit<IContributor, 'status'>
+    data: Omit<IContributor, 'status'>,
+    session?: mongoose.ClientSession
   ): Promise<IContributor> {
     const existingContributor = await Contributor.findOne({
       email: data.email,
-    });
+    }).session(session ?? null);
     if (existingContributor) {
       throw new AppError(
         'Cet email est déjà utilisé par un autre compte contributeur',
@@ -30,7 +31,9 @@ export class ContributorService {
       status: ContributorStatus.PENDING, // Default status as per model
     });
 
-    const savedContributor = await contributor.save();
+    const savedContributor = await contributor.save(
+      session ? { session } : undefined
+    );
     return savedContributor;
   }
 

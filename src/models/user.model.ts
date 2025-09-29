@@ -38,6 +38,7 @@ export interface IUser extends Document {
   address?: IAddress;
   isActive: boolean;
   isVerified: boolean;
+  isFirstLogin: boolean;
   mfaEnabled: boolean;
   mfaSecret?: string;
   mfaTempSecret?: string;
@@ -140,6 +141,10 @@ const userSchema = new Schema<IUser>(
       default: true,
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isFirstLogin: {
       type: Boolean,
       default: false,
     },

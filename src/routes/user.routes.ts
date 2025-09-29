@@ -8,11 +8,11 @@ import { userValidation } from '../validations/user.validation';
 const router = Router();
 
 // Routes publiques
-router.post(
-  '/register',
-  validateRequest(userValidation.register),
-  UserController.register
-);
+// router.post(
+//   '/register-offline',
+//   validateRequest(userValidation.register),
+//   UserController.register
+// );
 router.post(
   '/login',
   validateRequest(userValidation.login),
@@ -67,6 +67,13 @@ router.use(authMiddleware);
 router.use('/profile', subscriptionCheckMiddleware as any as RequestHandler);
 router.use('/stats', subscriptionCheckMiddleware as any as RequestHandler);
 router.use('/mfa', subscriptionCheckMiddleware as any as RequestHandler);
+
+// register user
+router.post(
+  '/register',
+  validateRequest(userValidation.register),
+  UserController.register
+);
 
 // Profil utilisateur
 router.get('/profile/:id', UserController.getProfile);

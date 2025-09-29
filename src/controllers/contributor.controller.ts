@@ -1,11 +1,14 @@
 import { NextFunction, Request, Response } from 'express';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { config } from '../config';
 import { IPermissionConstant } from '../constants/permission';
 import PERMISSIONSOWNER from '../constants/permission-owner';
 // import FollowRequest from '../models/followRequest.model';
+import { DOMAIN_ACTIVITIES } from '../constants/type-activity';
 import FollowRequest from '../models/followRequest.model';
 import { IUser, User } from '../models/user.model';
+import { ActivityTypeService } from '../services/activity-type.service';
+import { BeneficiaireTypeService } from '../services/beneficiaire-type.service';
 import { ContributorService } from '../services/contributor.service';
 import { EmailService } from '../services/email.service';
 import PermissionService from '../services/permission.service';
@@ -27,17 +30,17 @@ export class ContributorController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    const session = await mongoose.startSession();
     try {
       let user: IUser | null = null;
+      let newContributorDoc: any = null;
+      const generatedPassword = generatePassword();
 
       const contributorData = req.body;
       const owner = req.body.owner;
-
-      const newContributor = await ContributorService.createContributor(
-        contributorData
-      );
-
-      const generatedPassword = generatePassword();
+      const typeBeneficiaries = Array.isArray(req.body.typeBeneficiary)
+        ? req.body.typeBeneficiary
+        : [];
 
       if (!owner) {
         res.status(400).json({
@@ -45,40 +48,98 @@ export class ContributorController {
           message: 'Owner is required',
           data: null,
         });
+        return;
       }
 
-      user = new User({
-        ...owner,
-        contributorId: newContributor._id as string,
-      });
-      if (owner.email) {
-        user.email = owner.email;
-        user.emailVerificationToken = generateVerificationToken();
-        user.emailVerificationExpires = getTokenExpiryDate(24 * 7); // 7 jours
-      }
-      user.password = generatedPassword;
-      await user.save();
+      await session.withTransaction(async () => {
+        const newContributor = await ContributorService.createContributor(
+          contributorData,
+          session
+        );
+        newContributorDoc = newContributor;
 
-      // 2. Création automatique des permissions pour le membre
-      await Promise.all(
-        PERMISSIONSOWNER.map((permission: IPermissionConstant) =>
-          PermissionService.createPermissionsForUser(
-            permission.menu,
-            permission.label,
-            permission.actions,
-            user._id as string
+        user = new User({
+          ...owner,
+          contributorId: newContributor._id as string,
+        });
+        if (owner.email) {
+          user.email = owner.email;
+          user.emailVerificationToken = generateVerificationToken();
+          user.emailVerificationExpires = getTokenExpiryDate(24 * 7); // 7 jours
+        }
+        user.isFirstLogin = true;
+        user.password = generatedPassword;
+        await user.save({ session });
+
+        if (typeBeneficiaries.length > 0) {
+          await Promise.all(
+            typeBeneficiaries.map((tb: any) =>
+              BeneficiaireTypeService.create(
+                {
+                  label: tb.label,
+                  description: tb.description,
+                  contributorId: newContributor._id as Types.ObjectId,
+                },
+                session
+              )
+            )
+          );
+        }
+
+        console.log(
+          '🚀 ~ ContributorController ~ createContributor ~ contributorData:',
+          contributorData?.fieldOfActivity
+        );
+
+        const domainActivities =
+          DOMAIN_ACTIVITIES.find(
+            (item) =>
+              item.domain === contributorData?.fieldOfActivity?.toLowerCase()
+          )?.activities ?? [];
+        console.log(
+          '🚀 ~ ContributorController ~ createContributor ~ domainActivities:',
+          domainActivities
+        );
+
+        if (domainActivities.length > 0) {
+          await Promise.all(
+            domainActivities.map((activity) =>
+              ActivityTypeService.createActivityType(
+                {
+                  label: activity,
+                  contributorId: newContributor._id as Types.ObjectId,
+                  addToMenu: false,
+                },
+                session
+              )
+            )
+          );
+        }
+
+        // 2. Création automatique des permissions pour le membre
+        await Promise.all(
+          PERMISSIONSOWNER.map((permission: IPermissionConstant) =>
+            PermissionService.createPermissionsForUser(
+              permission.menu,
+              permission.label,
+              permission.actions,
+              user!._id as string,
+              session
+            )
           )
-        )
-      );
+        );
+      });
 
-      const confirmationUrl = `${config.frontendUrl}/account-validation?token=${user.emailVerificationToken}`;
+      const confirmationUrl = `${config.frontendUrl}/account-validation?token=${
+        user!.emailVerificationToken
+      }`;
 
       EmailService.sendEmail({
-        to: user.email as string,
+        to: user!.email as string,
         subject: 'Bienvenue sur Contrib - Votre compte a été créé',
         html: getContributorOwnerWelcomeTemplate({
-          firstName: newContributor.name,
-          name: newContributor.name,
+          firstName: newContributorDoc.name,
+          name: newContributorDoc.name,
           password: generatedPassword,
           loginUrl: config.email.partnerLoginUrl,
           confirmationUrl,
@@ -87,21 +148,13 @@ export class ContributorController {
 
       res.status(201).json({
         status: 'success',
-        data: newContributor,
+        data: newContributorDoc,
         message: 'Compte contributeur créé avec succès',
       });
     } catch (error) {
       next(error);
-      // throw new AppError(
-      //   error &&
-      //   typeof error === 'object' &&
-      //   'message' in error &&
-      //   typeof (error as any).message === 'string'
-      //     ? (error as any).message
-      //     : 'Erreur lors de la création du compte contributeur',
-      //   500,
-      //   error
-      // );
+    } finally {
+      await session.endSession();
     }
   }
 

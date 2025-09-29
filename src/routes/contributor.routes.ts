@@ -7,7 +7,7 @@ const router = Router();
 
 router.post(
   '/',
-  validateRequest({ body: contributorValidation.createContributor.body }),
+  // validateRequest({ body: contributorValidation.createContributor.body }),
   ContributorController.createContributor
 );
 

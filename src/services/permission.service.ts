@@ -53,7 +53,8 @@ class PermissionService {
     menu: string,
     label: string,
     actions: { name: string; value: string; enabled: boolean }[],
-    userId: string | mongoose.Types.ObjectId
+    userId: string | mongoose.Types.ObjectId,
+    session?: mongoose.ClientSession
   ): Promise<IPermission | null> {
     try {
       // Add a check to ensure userId is valid
@@ -63,10 +64,8 @@ class PermissionService {
         );
       }
 
-      const permission = await Permission.findOne({ menu, userId });
-      console.log(
-        '🚀 ~ PermissionService ~ createPermissionsForUser ~ permission:',
-        permission
+      const permission = await Permission.findOne({ menu, userId }).session(
+        session ?? null
       );
       if (permission) {
         await Permission.updateOne(
@@ -78,18 +77,25 @@ class PermissionService {
             $set: {
               label,
             },
-          }
+          },
+          { session }
         );
       } else {
-        await Permission.create({
-          menu,
-          userId,
-          label,
-          actions,
-        });
+        await Permission.create(
+          [
+            {
+              menu,
+              userId,
+              label,
+              actions,
+            },
+          ],
+          session ? { session } : undefined
+        );
       }
-      console.log('Ok');
-      return await Permission.findOne({ menu, userId });
+      return await Permission.findOne({ menu, userId }).session(
+        session ?? null
+      );
     } catch (error: any) {
       throw new Error(error.message);
     }

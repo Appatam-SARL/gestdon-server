@@ -7,32 +7,23 @@ import {
 } from '../types/beneficiaire-type.d';
 import { BeneficiaireTypeQueryParams } from '../validations/beneficiaire-type.validation';
 
-interface IPaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
-
 export class BeneficiaireTypeService {
-  static async create(data: IBeneficiaireTypeBase): Promise<IBeneficiaireType> {
+  static async create(
+    data: IBeneficiaireTypeBase,
+    session?: mongoose.ClientSession
+  ): Promise<IBeneficiaireType> {
     try {
       const existingType = await BeneficiaireTypeModel.findOne({
         label: data.label,
         contributorId: data.contributorId,
-      });
+      }).session(session ?? null);
 
       if (existingType) {
         throw new Error('Un type de bénéficiaire avec ce label existe déjà');
       }
 
       const beneficiaireType = new BeneficiaireTypeModel(data);
-      return await beneficiaireType.save();
+      return await beneficiaireType.save(session ? { session } : undefined);
     } catch (error: any) {
       if (error.message.includes('existe déjà')) {
         throw error;
