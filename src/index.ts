@@ -177,7 +177,10 @@ const startServer = async () => {
           `${process.env.MONGODB_URI?.replace(
             'env',
             process.env.NODE_ENV || 'dev'
-          )}`
+          )}`,
+          {
+            serverSelectionTimeoutMS: 30000,
+          }
         )
         .then(() => {
           logger.database('Connected to MongoDB');

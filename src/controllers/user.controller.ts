@@ -140,6 +140,13 @@ export class UserController {
       // génération du mot de passe
       userData.password = generatePassword();
 
+      // Mette isFirstLogin à false si l'admin ajoute un utilisateur pour la 1ère fois à après la création de son compte contributeur
+      const accountContribOwnerFound = await User.findById(req.user.id);
+      if (accountContribOwnerFound) {
+        accountContribOwnerFound.isFirstLogin = false;
+        await accountContribOwnerFound.save();
+      }
+
       // Créer et sauvegarder l'utilisateur
       const user = await User.create(userData);
 
@@ -683,6 +690,7 @@ export class UserController {
           firstName: user.firstName,
           lastName: user.lastName,
           phone: user.phone,
+          isFirstLogin: user.isFirstLogin,
         },
       });
     } catch (error) {

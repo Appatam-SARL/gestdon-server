@@ -29,30 +29,39 @@ interface IPaginatedResponse<T> {
 
 export class ActivityTypeService {
   static async createActivityType(
-    data: CreateActivityTypeInput
+    data: CreateActivityTypeInput,
+    session?: any
   ): Promise<IActivityType> {
     const activityType = new ActivityTypeModel(data);
     if (data.addToMenu) {
-      await MenuModel.create({
-        label: data.label,
-        contributorId: data.contributorId,
-        href: `/activity?type=${activityType._id}`,
-      });
+      await MenuModel.create(
+        [
+          {
+            label: data.label,
+            contributorId: data.contributorId,
+            href: `/activity?type=${activityType._id}`,
+          },
+        ],
+        session ? { session } : undefined
+      );
     } else {
       // Si l'activité est déjà dans le menu, on la supprime
       const menu = await MenuModel.findOne({
         contributorId: data.contributorId,
         href: `/activity?type=${activityType._id}`,
-      });
+      }).session(session ?? null);
       // On supprime l'activité de la liste si elle est déjà dans le menu
       if (menu) {
-        await MenuModel.deleteOne({
-          contributorId: data.contributorId,
-          href: `/activity?type=${activityType._id}`,
-        });
+        await MenuModel.deleteOne(
+          {
+            contributorId: data.contributorId,
+            href: `/activity?type=${activityType._id}`,
+          },
+          { session }
+        );
       }
     }
-    await activityType.save();
+    await activityType.save(session ? { session } : null);
     return activityType;
   }
 

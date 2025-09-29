@@ -509,14 +509,23 @@ export class ActivityController {
         req.body
       );
       if (!activity) {
-        res.status(404).json({ message: 'Activity not found' });
+        res.status(404).json({
+          success: false,
+          message: 'Activity not found',
+          data: null,
+        });
         return;
       }
-      res.status(200).json({ message: 'Activity budget defined successfully' });
+      res.status(200).json({
+        success: true,
+        message: 'Activity budget defined successfully',
+        data: activity,
+      });
     } catch (error) {
       res.status(500).json({
+        success: false,
         message: 'Error defining activity budget',
-        error,
+        data: error,
       });
     }
   }

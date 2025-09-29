@@ -1,25 +1,25 @@
-import mongoose, { Document, Schema, model, models } from 'mongoose';
+import mongoose, { Schema, model, models } from 'mongoose';
 import { z } from 'zod';
+import { IBeneficiaireType } from '../types/beneficiaire-type';
 
 // Zod Schema for validation
 export const BeneficiaireTypeZodSchema = z.object({
   label: z.string().min(1, 'Le label est requis'),
+  description: z.string().optional(),
   contributorId: z.string().min(1, "L'ID du contributeur est requis"),
 });
-
-// TypeScript Interface
-export interface IBeneficiaireType extends Document {
-  label: string;
-  contributorId: mongoose.Types.ObjectId;
-}
 
 // Mongoose Schema
 const beneficiaireTypeSchema = new Schema<IBeneficiaireType>(
   {
     label: {
       type: String,
+      uppercase: true,
       required: true,
-      maxlength: 50,
+      trim: true,
+    },
+    description: {
+      type: String,
       trim: true,
     },
     contributorId: {
