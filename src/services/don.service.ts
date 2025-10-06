@@ -51,7 +51,7 @@ class DonService {
         "L'URL du frontend n'est pas configurée pour cet environnement"
       );
 
-    const confirmationUrl = `${frontendUrl}/confirm-don?token=${token}`;
+    const confirmationUrl = `${frontendUrl}confirm-don?token=${token}`;
 
     // Générer le QR code
     const qrCodeImage = await this.generateQRCode(confirmationUrl);

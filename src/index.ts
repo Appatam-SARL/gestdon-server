@@ -64,6 +64,7 @@ const limiter = rateLimit({
 });
 
 const allowedOrigins = [
+  'https://unfragrantly-unharsh-jameson.ngrok-free.dev',
   'http://localhost:5173',
   'http://localhost:5174',
   'https://gestdon-contrib-workspace.vercel.app',
