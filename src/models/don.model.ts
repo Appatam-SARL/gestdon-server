@@ -8,7 +8,7 @@ export interface IDon extends Document {
   title: string;
   beneficiaire: IBeneficiaire['_id'];
   type: string;
-  montant: number;
+  montant: string;
   description?: string;
   devise: string;
   contributorId: mongoose.Types.ObjectId;
@@ -35,9 +35,8 @@ const donSchema = new Schema<IDon>(
       required: true,
     },
     montant: {
-      type: Number,
+      type: String,
       required: true,
-      min: 0,
     },
     description: {
       type: String,

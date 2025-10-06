@@ -6,7 +6,7 @@ export const createDonSchema = z.object({
     message: 'Invalid Beneficiaire ID format.',
   }),
   type: z.string().min(1, 'Type is required.'),
-  montant: z.number().min(0, 'Montant must be a positive number.'),
+  montant: z.string().min(0, 'Montant must be a positive number.'),
   description: z.string().optional(),
   devise: z.string().min(1, 'Devise is required.'),
   contributorId: z.string().refine((value) => /^[0-9a-fA-F]{24}$/.test(value), {
