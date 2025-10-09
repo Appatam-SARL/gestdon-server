@@ -6,10 +6,13 @@ type DonStatus = 'pending' | 'validated' | 'refused' | 'received';
 export interface IDon extends Document {
   _id: mongoose.Types.ObjectId | string;
   title: string;
+  description: string;
+  observation: string;
   beneficiaire: IBeneficiaire['_id'];
+  donorFullname: string;
+  donorPhone: string;
   type: string;
   montant: string;
-  description?: string;
   devise: string;
   contributorId: mongoose.Types.ObjectId;
   status: DonStatus;
@@ -30,6 +33,14 @@ const donSchema = new Schema<IDon>(
       ref: 'Beneficiaire',
       required: true,
     },
+    donorFullname: {
+      type: String,
+      required: true,
+      minLength: 1,
+      uppercase: true,
+      trim: true,
+    },
+    donorPhone: String,
     type: {
       type: String,
       required: true,
@@ -38,9 +49,8 @@ const donSchema = new Schema<IDon>(
       type: String,
       required: true,
     },
-    description: {
-      type: String,
-    },
+    description: String,
+    observation: String,
     devise: {
       type: String,
       required: true,

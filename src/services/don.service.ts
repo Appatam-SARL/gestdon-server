@@ -51,7 +51,7 @@ class DonService {
         "L'URL du frontend n'est pas configurée pour cet environnement"
       );
 
-    const confirmationUrl = `${frontendUrl}confirm-don?token=${token}`;
+    const confirmationUrl = `${frontendUrl}verify-don?token=${token}`;
 
     // Générer le QR code
     const qrCodeImage = await this.generateQRCode(confirmationUrl);
@@ -217,10 +217,16 @@ class DonService {
     );
   }
 
-  public static async confirmDon(donId: string): Promise<IDon | null> {
-    return Don.findByIdAndUpdate(donId, { status: 'received' }, { new: true })
-      .populate('beneficiaire')
-      .exec();
+  public static async confirmDon(
+    donId: string,
+    observation: string
+  ): Promise<IDon | null> {
+    const updatedDon = await Don.findByIdAndUpdate(
+      donId,
+      { status: 'received', observation },
+      { new: true }
+    ).populate('beneficiaire');
+    return updatedDon;
   }
 
   /**
