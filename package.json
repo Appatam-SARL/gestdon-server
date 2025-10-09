@@ -21,7 +21,8 @@
     "test:perf": "jest --testPathPattern=src/__tests__/performance --detectOpenHandles --forceExit",
     "test:puppeteer": "node scripts/test-puppeteer.js",
     "test:puppeteer:robust": "node scripts/test-puppeteer-robust.js",
-    "test:invoice": "node scripts/test-invoice-service.js"
+    "test:invoice": "node scripts/test-invoice-service.js",
+    "test:don-pdf": "node scripts/test-don-pdf.js"
   },
   "dependencies": {
     "@types/ioredis": "^5.0.0",

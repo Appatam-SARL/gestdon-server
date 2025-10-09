@@ -1,0 +1,68 @@
+### Variables d'environnement pour les tests
+@baseUrl = http://localhost:5000/api
+@authToken = YOUR_AUTH_TOKEN_HERE
+@donId = YOUR_DON_ID_HERE
+@verificationToken = YOUR_VERIFICATION_TOKEN_HERE
+
+### 1. Créer un nouveau don (pour tester)
+POST {{baseUrl}}/don
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Don de test pour PDF",
+  "description": "Ceci est un don de test pour vérifier la génération de PDF",
+  "beneficiaire": "64f8b1234567890abcdef123",
+  "donorFullname": "JEAN DUPONT",
+  "donorPhone": "+33123456789",
+  "type": "Espèces",
+  "montant": "100",
+  "devise": "EUR",
+  "contributorId": "64f8b1234567890abcdef456",
+  "startDate": "2024-01-15T10:00:00Z",
+  "endDate": "2024-01-15T11:00:00Z"
+}
+
+### 2. Télécharger le PDF du don
+GET {{baseUrl}}/don/{{donId}}/pdf
+Authorization: Bearer {{authToken}}
+
+### 3. Vérifier un don via le token (pour tester le QR code)
+GET {{baseUrl}}/don/verify/{{verificationToken}}
+
+### 4. Récupérer les informations d'un don
+GET {{baseUrl}}/don/{{donId}}
+Authorization: Bearer {{authToken}}
+
+### 5. Lister tous les dons
+GET {{baseUrl}}/don
+Authorization: Bearer {{authToken}}
+
+### 6. Récupérer les statistiques des dons
+GET {{baseUrl}}/don/stats
+Authorization: Bearer {{authToken}}
+
+### 7. Confirmer un don via token
+PUT {{baseUrl}}/don/confirm-don/{{verificationToken}}
+Authorization: Bearer {{authToken}}
+
+### 8. Mettre à jour un don (ajouter observation)
+PUT {{baseUrl}}/don/{{donId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "observation": "Observation ajoutée après la création du don"
+}
+
+### 9. Supprimer un don
+DELETE {{baseUrl}}/don/{{donId}}
+Authorization: Bearer {{authToken}}
+
+### Notes d'utilisation :
+### 1. Remplacez YOUR_AUTH_TOKEN_HERE par un token d'authentification valide
+### 2. Remplacez YOUR_DON_ID_HERE par l'ID d'un don existant
+### 3. Remplacez YOUR_VERIFICATION_TOKEN_HERE par le token de vérification du don
+### 4. Assurez-vous que les IDs de bénéficiaire et contributeur existent dans votre base de données
+### 5. Le téléchargement PDF (requête 2) va déclencher le téléchargement du fichier PDF
+### 6. La vérification via token (requête 3) simule ce qui se passe quand on scanne le QR code
