@@ -4,12 +4,13 @@ const options: swaggerJSDoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'ValDeli API',
+      title: 'Contrib API',
       version: '1.0.0',
-      description: 'API pour le service de livraison et transport ValDeli',
+      description:
+        'API pour le service de gestion des dons communautaire Contrib',
       contact: {
-        name: 'Équipe ValDeli',
-        email: 'contact@valdeli.com',
+        name: 'Équipe Contrib',
+        email: 'contact@appatam.com',
       },
     },
     servers: [
