@@ -3,81 +3,149 @@ import { ILogFilter, LogService } from '../services/log.service';
 
 export class LogController {
   /**
-   * Parse les paramètres de date de la requête
+   * Parse et valide les paramètres de date de la requête
+   * @param req Requête Express contenant startDate et endDate dans query
+   * @returns Filtre de date ou undefined si aucune date n'est fournie
+   * @throws Error si les dates sont invalides ou si startDate > endDate
    */
   private static parseDateFilter(req: Request): ILogFilter | undefined {
     const { startDate, endDate } = req.query;
 
-    console.log('Query', req.query);
-
-    if (!startDate && !endDate) return undefined;
+    // Si aucune date n'est fournie, retourner undefined
+    if (!startDate && !endDate) {
+      return undefined;
+    }
 
     const filter: ILogFilter = {};
 
+    // Validation et parsing de startDate
     if (startDate) {
       const parsedStartDate = new Date(startDate as string);
-      if (!isNaN(parsedStartDate.getTime())) {
-        filter.startDate = parsedStartDate;
+      if (isNaN(parsedStartDate.getTime())) {
+        throw new Error(
+          `Format de date invalide pour startDate: "${startDate}". Format attendu: ISO 8601 (ex: 2024-01-01T00:00:00Z)`
+        );
       }
+      filter.startDate = parsedStartDate;
     }
 
+    // Validation et parsing de endDate
     if (endDate) {
       const parsedEndDate = new Date(endDate as string);
-      if (!isNaN(parsedEndDate.getTime())) {
-        filter.endDate = parsedEndDate;
+      if (isNaN(parsedEndDate.getTime())) {
+        throw new Error(
+          `Format de date invalide pour endDate: "${endDate}". Format attendu: ISO 8601 (ex: 2024-12-31T23:59:59Z)`
+        );
       }
+      filter.endDate = parsedEndDate;
     }
 
-    return Object.keys(filter).length > 0 ? filter : undefined;
+    // Validation: startDate doit être antérieure ou égale à endDate
+    if (
+      filter.startDate &&
+      filter.endDate &&
+      filter.startDate > filter.endDate
+    ) {
+      throw new Error(
+        `startDate (${filter.startDate.toISOString()}) doit être antérieure ou égale à endDate (${filter.endDate.toISOString()})`
+      );
+    }
+
+    return filter;
   }
 
   /**
-   * Récupère les logs d'une entité
+   * Récupère les logs d'une entité avec pagination et filtrage par date
+   *
+   * @route GET /logs/:entityType/:entityId
+   *
+   * @param req.params.entityType - Type d'entité (ex: USER, PRODUCT, ORDER)
+   * @param req.params.entityId - ID de l'entité
+   *
+   * @query limit - Nombre de résultats par page (défaut: 10, min: 1, max: 100)
+   * @query page - Numéro de page (défaut: 1, min: 1)
+   * @query startDate - Date de début au format ISO 8601 (optionnel, ex: 2024-01-01T00:00:00Z)
+   * @query endDate - Date de fin au format ISO 8601 (optionnel, ex: 2024-12-31T23:59:59Z)
+   *
+   * @example
+   * GET /logs/USER/123?page=1&limit=20&startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z
+   *
+   * @returns {Object} Réponse avec les logs et les métadonnées de pagination
    */
   static async getEntityLogs(req: Request, res: Response): Promise<void> {
     try {
+      // Extraction des paramètres de route
       const { entityType, entityId } = req.params;
-      const { limit = '10', skip = '0', page = 1 } = req.query;
 
-      console.log('Params', req.params);
-
-      let dateFilter;
-      try {
-        dateFilter = LogController.parseDateFilter(req);
-      } catch (error) {
-        console.error('Error parsing date filter:', error);
+      // Validation des paramètres requis
+      if (!entityType || !entityId) {
+        res.status(400).json({
+          message: 'Les paramètres entityType et entityId sont requis',
+        });
+        return;
       }
 
-      console.log('Date filter', dateFilter);
+      // Extraction et validation des paramètres de pagination
+      const { limit = '10', page = '1' } = req.query;
+      const limitNumber = Math.min(
+        100,
+        Math.max(1, parseInt(limit as string, 10) || 10)
+      );
+      const pageNumber = Math.max(1, parseInt(page as string, 10) || 1);
+      const skip = (pageNumber - 1) * limitNumber;
 
+      // Parsing et validation du filtre de date (startDate et endDate)
+      const dateFilter = LogController.parseDateFilter(req);
+
+      // Récupération des logs et du total depuis le service
       const [logs, total] = await LogService.getEntityLogs(
         entityType,
         entityId,
-        parseInt(limit as string, 10),
-        parseInt(skip as string, 10),
+        limitNumber,
+        skip,
         dateFilter
       );
 
-      // const total = logs.length;
-
       // Calcul des métadonnées de pagination
-      const totalPages = Math.ceil(Number(total) / Number(limit));
-      const hasNextPage = Number(page) < totalPages;
-      const hasPrevPage = Number(page) > 1;
+      const totalPages = Math.ceil(total / limitNumber);
+      const hasNextPage = pageNumber < totalPages;
+      const hasPrevPage = pageNumber > 1;
 
+      // Réponse avec les données et métadonnées
       res.json({
         data: logs,
         metadata: {
           total,
-          page: Number(page),
+          page: pageNumber,
           totalPages,
           hasNextPage,
           hasPrevPage,
-          limit: Number(limit),
+          limit: limitNumber,
+          ...(dateFilter && {
+            dateFilter: {
+              startDate: dateFilter.startDate?.toISOString(),
+              endDate: dateFilter.endDate?.toISOString(),
+            },
+          }),
         },
       });
     } catch (error) {
-      res.status(400).json({ message: (error as Error).message });
+      const errorMessage = (error as Error).message;
+
+      // Distinction entre erreurs de validation (400) et erreurs serveur (500)
+      const statusCode =
+        errorMessage.includes('invalide') ||
+        errorMessage.includes('requis') ||
+        errorMessage.includes('antérieure')
+          ? 400
+          : 500;
+
+      res.status(statusCode).json({
+        message: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: (error as Error).stack,
+        }),
+      });
     }
   }
 

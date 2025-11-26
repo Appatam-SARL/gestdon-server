@@ -1414,10 +1414,7 @@ export class UserController {
         { expiresIn: '30d' }
       );
 
-      const frontendUrl =
-        process.env[`ADMIN_URL_${process.env.NODE_ENV?.toUpperCase()}`];
-
-      const invitationUrl = `${frontendUrl}/register-invited?token=${token}`;
+      const invitationUrl = `${process.env.FRONTEND_URL}/register-invited?token=${token}`;
 
       const templateInviteUserEmail = getAdminInvitationTemplate({
         invitingAdminFirstName: user?.firstName as string,
